@@ -6,13 +6,13 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { TaskCard } from './TaskCard';
 import { TaskModal } from './TaskModal';
 import { Task } from '@/types/task';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
 interface TaskColumnProps {
   title: string;
   status: 'BACKLOG' | 'IN_PROGRESS' | 'COMPLETED';
   description: string;
   tasks: Task[];
-  onTaskClick: (task: Task) => void;
   onTaskSave: (taskData: Partial<Task>) => Promise<void>;
   onTaskDelete: (taskId: string) => Promise<void>;
   isDeveloperMode?: boolean;
@@ -30,7 +30,6 @@ export function TaskColumn({
   status,
   description,
   tasks,
-  onTaskClick,
   onTaskSave,
   onTaskDelete,
   isDeveloperMode = false,
@@ -39,6 +38,8 @@ export function TaskColumn({
 }: TaskColumnProps) {
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { setNodeRef } = useDroppable({
     id: status,
@@ -97,38 +98,41 @@ export function TaskColumn({
     }
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    if (confirm('Вы уверены, что хотите удалить эту задачу?')) {
-      try {
-        await onTaskDelete(taskId);
-      } catch (error: any) {
-        alert(error.message || 'Ошибка при удалении задачи');
-      }
+  const handleDeleteTask = async () => {
+    if (!pendingDeleteId) return;
+
+    try {
+      await onTaskDelete(pendingDeleteId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Ошибка при удалении задачи';
+      setErrorMessage(message);
+    } finally {
+      setPendingDeleteId(null);
     }
   };
 
   return (
     <div 
       ref={setNodeRef}
-      className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full min-h-[500px]"
+      className="bg-white rounded-3xl shadow-lg border border-gray-200 flex flex-col h-full min-h-[500px]"
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
+          <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+          <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
             {tasks.length}
           </span>
         </div>
-        <p className="text-sm text-gray-600">{description}</p>
+        <p className="text-sm text-gray-700 font-medium">{description}</p>
 
         {/* Сортировка */}
         {onSortChange && (
-          <div className="mt-3">
+          <div className="mt-4">
             <select
               value={sortBy}
               onChange={(e) => onSortChange(e.target.value)}
-              className="w-full text-sm px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full text-sm font-medium px-3 py-2 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
             >
               {getSortOptions().map((option) => (
                 <option key={option.value} value={option.value}>
@@ -172,7 +176,7 @@ export function TaskColumn({
                 onClick={() => handleEditTask(task)}
                 onDelete={
                   status === 'BACKLOG' || isDeveloperMode
-                    ? () => handleDeleteTask(task.id)
+                    ? () => setPendingDeleteId(task.id)
                     : undefined
                 }
                 isDeveloperMode={isDeveloperMode}
@@ -187,7 +191,7 @@ export function TaskColumn({
             setEditingTask(null);
             setShowModal(true);
           }}
-          className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors text-sm font-medium"
+          className="w-full p-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all text-sm font-semibold"
         >
           + Добавить задачу
         </button>
@@ -206,6 +210,27 @@ export function TaskColumn({
           onSave={editingTask ? handleUpdateTask : handleCreateTask}
         />
       )}
+
+      <ConfirmModal
+        isOpen={pendingDeleteId !== null}
+        title="Удалить задачу?"
+        description="Задача будет удалена без возможности восстановления."
+        confirmText="Удалить"
+        cancelText="Отмена"
+        variant="danger"
+        onConfirm={handleDeleteTask}
+        onClose={() => setPendingDeleteId(null)}
+      />
+
+      <ConfirmModal
+        isOpen={Boolean(errorMessage)}
+        title="Ошибка"
+        description={errorMessage}
+        confirmText="Понятно"
+        showCancel={false}
+        onConfirm={() => setErrorMessage(null)}
+        onClose={() => setErrorMessage(null)}
+      />
     </div>
   );
 }

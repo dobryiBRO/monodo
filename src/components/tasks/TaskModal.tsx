@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { Task } from '@/types/task';
 import { CategorySelect } from '@/components/categories/CategorySelect';
-import { formatTime, minutesToSeconds, secondsToMinutes } from '@/lib/utils';
+import { minutesToSeconds, secondsToMinutes } from '@/lib/utils';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -25,7 +26,21 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
     endTime: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedCategoryColor, setSelectedCategoryColor] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Закрытие по Escape
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (task) {
@@ -36,12 +51,9 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
         expectedTime: task.expectedTime ? secondsToMinutes(task.expectedTime) : 0,
         actualTime: task.actualTime ? secondsToMinutes(task.actualTime) : 0,
         categoryId: task.categoryId,
-        startTime: task.startTime ? new Date(task.startTime).toISOString().slice(0, 16) : '',
-        endTime: task.endTime ? new Date(task.endTime).toISOString().slice(0, 16) : '',
+        startTime: task.startTime ? format(new Date(task.startTime), 'HH:mm') : '',
+        endTime: task.endTime ? format(new Date(task.endTime), 'HH:mm') : '',
       });
-      if (task.category) {
-        setSelectedCategoryColor(task.category.color);
-      }
     } else {
       // Сброс формы для новой задачи
       setFormData({
@@ -62,8 +74,19 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage(null);
 
     try {
+      const referenceDay = task?.day ? new Date(task.day) : new Date();
+      const buildDateFromTime = (timeValue: string, fallback?: Date) => {
+        if (!timeValue) return undefined;
+        const base = fallback ? new Date(fallback) : new Date(referenceDay);
+        const [hours, minutes] = timeValue.split(':').map(Number);
+        if (Number.isNaN(hours) || Number.isNaN(minutes)) return undefined;
+        base.setHours(hours ?? 0, minutes ?? 0, 0, 0);
+        return base;
+      };
+
       const taskData: Partial<Task> = {
         title: formData.title,
         description: formData.description || undefined,
@@ -72,13 +95,13 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
         actualTime: minutesToSeconds(formData.actualTime),
         categoryId: formData.categoryId,
         status: task ? task.status : status,
-        startTime: formData.startTime ? new Date(formData.startTime) : undefined,
-        endTime: formData.endTime ? new Date(formData.endTime) : undefined,
+        startTime: buildDateFromTime(formData.startTime, task?.startTime ? new Date(task.startTime) : undefined),
+        endTime: buildDateFromTime(formData.endTime, task?.endTime ? new Date(task.endTime) : undefined),
       };
 
       // Для новой задачи добавить поля userId и day
       if (!task) {
-        (taskData as any).userId = 'temp'; // Будет установлен хуком
+        taskData.userId = 'temp'; // Будет установлен хуком
         taskData.day = new Date();
       }
 
@@ -86,7 +109,7 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
       onClose();
     } catch (error) {
       console.error('Error saving task:', error);
-      alert('Ошибка при сохранении задачи');
+      setErrorMessage('Не удалось сохранить задачу. Попробуйте снова.');
     } finally {
       setIsSubmitting(false);
     }
@@ -103,26 +126,48 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
   // Определяем, можно ли редактировать поля
   const canEditExpectedTime = isBacklog || (isInProgress && !hasActiveTimer);
   const canEditStartTime = isInProgress && !hasActiveTimer;
-  const canEditAll = isBacklog || (task && task.status === 'BACKLOG');
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-semibold mb-4">
+    <div 
+      className="fixed inset-0 bg-white/20 backdrop-blur-md flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div 
+        className="relative bg-white/95 backdrop-blur-sm rounded-3xl p-8 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-6 right-6 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors rounded-full p-2"
+          disabled={isSubmitting}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">
           {task ? 'Редактировать задачу' : 'Новая задача'}
         </h2>
         
+        {errorMessage && (
+          <div className="mb-4 p-4 bg-red-50 border-2 border-red-200 text-sm text-red-700 rounded-2xl font-semibold">
+            {errorMessage}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Название задачи */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Название задачи *
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              Название задачи*
             </label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
               required
               disabled={isSubmitting || Boolean(isCompleted && task)}
               readOnly={Boolean(isCompleted && task)}
@@ -131,13 +176,13 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
 
           {/* Описание */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
               Описание
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
               rows={3}
               disabled={isSubmitting || Boolean(isCompleted && task)}
               readOnly={Boolean(isCompleted && task)}
@@ -146,13 +191,13 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
 
           {/* Приоритет */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
               Приоритет
             </label>
             <select
               value={formData.priority}
               onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'LOW' | 'HIGH' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-900"
               disabled={isSubmitting || Boolean(isCompleted && task)}
             >
               <option value="LOW">Низкий</option>
@@ -162,16 +207,13 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
 
           {/* Категория */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
               Категория
             </label>
             <CategorySelect
               value={formData.categoryId}
-              onChange={(categoryId, category) => {
+              onChange={(categoryId) => {
                 setFormData({ ...formData, categoryId });
-                if (category) {
-                  setSelectedCategoryColor(category.color);
-                }
               }}
               showColorPicker={false}
             />
@@ -180,14 +222,14 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
           {/* Ожидаемое время реализации */}
           {!isCompleted && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Ожидаемое время (минуты)
               </label>
               <input
                 type="number"
                 value={formData.expectedTime}
                 onChange={(e) => setFormData({ ...formData, expectedTime: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
                 min="0"
                 disabled={isSubmitting || !canEditExpectedTime}
                 readOnly={!canEditExpectedTime}
@@ -202,15 +244,15 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
 
           {/* Время начала (для IN_PROGRESS) */}
           {isInProgress && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Время начала
               </label>
               <input
-                type="datetime-local"
+              type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
                 disabled={isSubmitting || !canEditStartTime}
                 readOnly={!canEditStartTime}
               />
@@ -225,14 +267,14 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
           {/* Время окончания (для COMPLETED) */}
           {isCompleted && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Время окончания
               </label>
               <input
-                type="datetime-local"
+                type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
                 disabled={isSubmitting || Boolean(task)}
                 readOnly={Boolean(task)}
               />
@@ -241,14 +283,14 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
 
           {/* Фактическое время реализации */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
               Фактическое время (минуты)
             </label>
             <input
               type="number"
               value={formData.actualTime}
               onChange={(e) => setFormData({ ...formData, actualTime: parseInt(e.target.value) || 0 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
               min="0"
               disabled={isSubmitting || (isInProgress && hasActiveTimer) || Boolean(isCompleted && task)}
               readOnly={(isInProgress && hasActiveTimer) || Boolean(isCompleted && task)}
@@ -262,27 +304,26 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
 
           {/* % План/Факт (для COMPLETED) */}
           {isCompleted && formData.expectedTime > 0 && (
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-700">
-                <span className="font-medium">План/Факт: </span>
-                {Math.round((formData.expectedTime / (formData.actualTime || 1)) * 100)}%
+            <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl">
+              <p className="text-sm text-blue-800 font-semibold">
+                План/Факт: {Math.round((formData.expectedTime / (formData.actualTime || 1)) * 100)}%
               </p>
             </div>
           )}
 
           {/* Кнопки */}
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex justify-end gap-3 pt-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              className="px-5 py-3 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors rounded-2xl bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
               disabled={isSubmitting}
             >
               Отмена
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="px-5 py-3 text-sm font-semibold text-white rounded-2xl bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Сохранение...' : task ? 'Сохранить' : 'Создать'}

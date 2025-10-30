@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Task } from '@/types/task';
 import { Timer } from './Timer';
-import { createCompletedGradient } from '@/lib/utils';
+import { createCompletedGradient, createCategoryGradient, hexToRgba } from '@/lib/utils';
 
 interface TaskCardProps {
   task: Task;
@@ -46,17 +46,25 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
 
   // Определяем стиль фона карточки
   const getCardStyle = () => {
-    if (task.status === 'COMPLETED' && task.category) {
+    if (!task.category) {
+      return {};
+    }
+
+    const baseColor = task.category.color;
+
+    if (task.status === 'COMPLETED') {
       return {
-        background: createCompletedGradient(task.category.color),
+        background: createCompletedGradient(baseColor),
+        borderColor: hexToRgba(baseColor, 0.4),
+        boxShadow: `0 12px 30px ${hexToRgba(baseColor, 0.25)}`,
       };
     }
-    if (task.category) {
-      return {
-        borderLeft: `4px solid ${task.category.color}`,
-      };
-    }
-    return {};
+
+    return {
+      background: createCategoryGradient(baseColor, 0.18),
+      borderColor: hexToRgba(baseColor, 0.35),
+      boxShadow: `0 10px 24px ${hexToRgba(baseColor, 0.18)}`,
+    };
   };
 
   // Проверка просрочки времени начала
@@ -77,7 +85,7 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
         style={{ ...style, ...getCardStyle() }}
         {...attributes}
         {...listeners}
-        className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group"
+        className="bg-white border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group"
       >
         <div
           onClick={(e) => {
@@ -86,10 +94,10 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
           }}
           className="cursor-pointer"
         >
-          <div className="flex justify-between items-start mb-2">
-            <h4 className="font-medium text-gray-900 flex-1">{task.title}</h4>
+          <div className="flex justify-between items-start mb-3">
+            <h4 className="font-semibold text-gray-900 flex-1 text-base">{task.title}</h4>
             <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(task.priority)}`}>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getPriorityColor(task.priority)}`}>
                 {getPriorityLabel(task.priority)}
               </span>
               {onDelete && (
@@ -110,21 +118,21 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
           </div>
           
           {task.description && (
-            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
+            <p className="text-sm text-gray-700 mb-3 line-clamp-2 font-medium">{task.description}</p>
           )}
           
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-sm font-medium">
             {task.category && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <div
-                  className="w-3 h-3 rounded"
+                  className="w-3 h-3 rounded-md"
                   style={{ backgroundColor: task.category.color }}
                 />
-                <span className="text-gray-600">{task.category.name}</span>
+                <span className="text-gray-800">{task.category.name}</span>
               </div>
             )}
             {task.expectedTime && (
-              <span className="text-gray-500">
+              <span className="text-gray-600 font-semibold">
                 ~{Math.round(task.expectedTime / 60)} мин
               </span>
             )}
@@ -144,7 +152,7 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
         style={{ ...style, ...getCardStyle() }}
         {...attributes}
         {...listeners}
-        className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group"
+        className="bg-white border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group"
       >
         <div
           onClick={(e) => {
@@ -153,10 +161,10 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
           }}
           className="cursor-pointer"
         >
-          <div className="flex justify-between items-start mb-2">
-            <h4 className="font-medium text-gray-900 flex-1">{task.title}</h4>
+          <div className="flex justify-between items-start mb-3">
+            <h4 className="font-semibold text-gray-900 flex-1 text-base">{task.title}</h4>
             <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(task.priority)}`}>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getPriorityColor(task.priority)}`}>
                 {getPriorityLabel(task.priority)}
               </span>
               {canDelete && onDelete && (
@@ -189,19 +197,19 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
             </div>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-3">
             {task.category && (
-              <div className="flex items-center gap-1 text-sm">
+              <div className="flex items-center gap-2 text-sm">
                 <div
-                  className="w-3 h-3 rounded"
+                  className="w-3 h-3 rounded-md"
                   style={{ backgroundColor: task.category.color }}
                 />
-                <span className="text-gray-600">{task.category.name}</span>
+                <span className="text-gray-800 font-medium">{task.category.name}</span>
               </div>
             )}
             
             {task.startTime && (
-              <div className={`text-xs ${isStartTimeOverdue() ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+              <div className={`text-xs font-semibold ${isStartTimeOverdue() ? 'text-red-600' : 'text-gray-600'}`}>
                 Начало: {new Date(task.startTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
               </div>
             )}
@@ -224,7 +232,7 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
         style={{ ...style, ...getCardStyle() }}
         {...attributes}
         {...listeners}
-        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all cursor-grab active:cursor-grabbing text-white"
+        className="border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl transition-all cursor-grab active:cursor-grabbing text-white"
       >
         <div
           onClick={(e) => {
@@ -233,18 +241,18 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
           }}
           className="cursor-pointer"
         >
-          <div className="flex justify-between items-start mb-2">
-            <h4 className="font-medium flex-1">{task.title}</h4>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium bg-white bg-opacity-20`}>
+          <div className="flex justify-between items-start mb-3">
+            <h4 className="font-semibold flex-1 text-base">{task.title}</h4>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white bg-opacity-25`}>
               {getPriorityLabel(task.priority)}
             </span>
           </div>
           
-          <div className="space-y-1 text-sm opacity-90">
+          <div className="space-y-2 text-sm opacity-95 font-medium">
             {task.category && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <div
-                  className="w-3 h-3 rounded border border-white"
+                  className="w-3 h-3 rounded-md border-2 border-white"
                   style={{ backgroundColor: task.category.color }}
                 />
                 <span>{task.category.name}</span>
@@ -252,17 +260,17 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
             )}
             
             {task.endTime && (
-              <div className="text-xs">
+              <div className="text-xs font-semibold">
                 Завершено: {new Date(task.endTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
               </div>
             )}
             
             <div className="flex items-center justify-between pt-1">
-              <span className="text-xs">
+              <span className="text-xs font-semibold">
                 Время: {Math.round(task.actualTime / 60)} мин
               </span>
               {task.expectedTime && (
-                <span className="text-xs">
+                <span className="text-xs font-semibold">
                   План/Факт: {Math.round((task.expectedTime / (task.actualTime || 1)) * 100)}%
                 </span>
               )}

@@ -112,6 +112,19 @@ export function DataMigration() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [status]);
 
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowModal(false);
+      }
+    };
+
+    if (showModal) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [showModal]);
+
   return (
     <>
       {/* Ненавязчивый баннер */}
@@ -152,32 +165,47 @@ export function DataMigration() {
 
       {/* Модальное окно */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div
+          className="fixed inset-0 bg-white/20 backdrop-blur-md flex items-center justify-center z-50"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="relative bg-white/95 backdrop-blur-sm rounded-3xl p-8 w-full max-w-md mx-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-6 right-6 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors rounded-full p-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="text-center space-y-4">
+              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-blue-100">
+                <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
-              
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+
+              <h3 className="text-xl font-bold text-gray-900">
                 Зарегистрируйтесь для продолжения
               </h3>
-              <p className="text-sm text-gray-600 mb-6">
+              <p className="text-sm text-gray-600">
                 Вы создали {getTaskCounter()} задач. Зарегистрируйтесь, чтобы не потерять свои данные и продолжить работу.
               </p>
-              
-              <div className="space-y-3">
+
+              <div className="space-y-3 pt-2">
                 <button
                   onClick={() => router.push('/login')}
-                  className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="w-full px-5 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-colors font-semibold shadow-md"
                 >
                   Зарегистрироваться
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="w-full px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors text-sm"
+                  className="w-full px-5 py-3 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors rounded-2xl bg-gray-100 hover:bg-gray-200"
                 >
                   Позже
                 </button>
@@ -189,10 +217,10 @@ export function DataMigration() {
 
       {/* Индикатор миграции */}
       {isMigrating && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm mx-4 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-700 font-medium">Синхронизация данных...</p>
+        <div className="fixed inset-0 bg-white/40 backdrop-blur-lg flex items-center justify-center z-50">
+          <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 w-full max-w-sm mx-4 text-center shadow-2xl">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
+            <p className="text-gray-800 font-semibold">Синхронизация данных...</p>
             <p className="text-sm text-gray-500 mt-2">Пожалуйста, подождите</p>
           </div>
         </div>

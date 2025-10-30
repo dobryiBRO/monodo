@@ -65,7 +65,7 @@ export function CategorySelect({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex-1 flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex-1 flex items-center justify-between px-4 py-3 border-2 border-gray-300 rounded-2xl hover:bg-blue-50 transition-colors"
         >
           <span className="flex items-center gap-2">
             {selectedCategory ? (
@@ -100,14 +100,14 @@ export function CategorySelect({
             type="color"
             value={selectedCategory.color}
             onChange={(e) => onColorChange?.(e.target.value)}
-            className="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer"
+            className="w-12 h-12 border-2 border-gray-300 rounded-2xl cursor-pointer"
             title="Изменить цвет"
           />
         )}
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 mt-2 w-full bg-white/95 backdrop-blur-sm border-2 border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto">
           {categories.length > 0 && (
             <div className="p-1">
               {categories.map((category) => (
@@ -118,7 +118,7 @@ export function CategorySelect({
                     onChange(category.id, category);
                     setIsOpen(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded transition-colors"
+                  className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-blue-50 rounded-2xl transition-colors"
                 >
                   <div
                     className="w-4 h-4 rounded"
@@ -134,18 +134,18 @@ export function CategorySelect({
             <button
               type="button"
               onClick={() => setIsCreatingNew(true)}
-              className="w-full px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 transition-colors border-t"
+              className="w-full px-4 py-3 text-left text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors border-t"
             >
               + Создать новую категорию
             </button>
           ) : (
-            <div className="p-3 border-t space-y-2">
+            <div className="p-4 border-t space-y-3 bg-white/80">
               <input
                 type="text"
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 placeholder="Название категории"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoFocus
                 onKeyPress={(e) => e.key === 'Enter' && handleCreateCategory()}
               />
@@ -154,12 +154,12 @@ export function CategorySelect({
                   type="color"
                   value={newCategoryColor}
                   onChange={(e) => setNewCategoryColor(e.target.value)}
-                  className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                  className="w-12 h-12 border-2 border-gray-300 rounded-2xl cursor-pointer"
                 />
                 <button
                   type="button"
                   onClick={handleCreateCategory}
-                  className="flex-1 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-2xl hover:bg-blue-700 transition-colors"
                 >
                   Создать
                 </button>
@@ -170,7 +170,7 @@ export function CategorySelect({
                     setNewCategoryName('');
                     setNewCategoryColor(generateRandomColor());
                   }}
-                  className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                  className="px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-2xl transition-colors"
                 >
                   Отмена
                 </button>

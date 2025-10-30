@@ -10,7 +10,7 @@ interface TimerProps {
 }
 
 export function Timer({ task }: TimerProps) {
-  const { updateTask } = useTasks();
+  const { updateTask, updateTaskStatus } = useTasks();
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -109,8 +109,9 @@ export function Timer({ task }: TimerProps) {
   const handleStop = async () => {
     try {
       await updateTask(task.id, {
-        startTime: undefined,
-        expectedTime: undefined, // Сбросить таймер
+        startTime: null,
+        endTime: null,
+        actualTime: actualTimeRef.current,
       });
       setIsRunning(false);
       setIsPaused(false);
@@ -122,10 +123,11 @@ export function Timer({ task }: TimerProps) {
   const handleComplete = async () => {
     try {
       await updateTask(task.id, {
-        status: 'COMPLETED',
-        endTime: new Date(),
-        completedAt: new Date(),
+        actualTime: actualTimeRef.current,
       });
+
+      await updateTaskStatus(task.id, 'COMPLETED');
+
       setIsRunning(false);
       setIsPaused(false);
     } catch (error) {

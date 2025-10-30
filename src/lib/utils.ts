@@ -88,6 +88,30 @@ export function generateRandomGradient(): string {
   return `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`;
 }
 
+export function hexToRgba(hex: string, alpha = 1): string {
+  let normalized = hex.replace('#', '');
+
+  if (normalized.length === 3) {
+    normalized = normalized
+      .split('')
+      .map((char) => char + char)
+      .join('');
+  }
+
+  const bigint = parseInt(normalized, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+export function createCategoryGradient(categoryColor: string, intensity = 0.15): string {
+  const primary = hexToRgba(categoryColor, intensity);
+  const secondary = hexToRgba(categoryColor, Math.max(intensity / 4, 0.05));
+  return `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`;
+}
+
 /**
  * Создание градиента для выполненной задачи (цвет категории + зеленый)
  */

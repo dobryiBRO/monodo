@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -16,6 +16,8 @@ import { TaskCard } from './TaskCard';
 import { useTasks } from '@/hooks/useTasks';
 import { useDeveloperMode } from '@/contexts/DeveloperModeContext';
 import { Task } from '@/types/task';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { arrayMove } from '@dnd-kit/sortable';
 
 export function TaskBoard() {
   const { tasks, isLoading, error, createTask, updateTask, deleteTask, updateTaskStatus } = useTasks();
@@ -26,17 +28,50 @@ export function TaskBoard() {
     IN_PROGRESS: 'default',
     COMPLETED: 'default',
   });
+  const [customOrder, setCustomOrder] = useState<Record<Task['status'], string[]>>({
+    BACKLOG: [],
+    IN_PROGRESS: [],
+    COMPLETED: [],
+  });
+  const [infoModal, setInfoModal] = useState<{ title: string; description: string } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 12,
       },
     })
   );
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCustomOrder((prev) => {
+      let changed = false;
+      const next = { ...prev } as Record<Task['status'], string[]>;
+
+      (['BACKLOG', 'IN_PROGRESS', 'COMPLETED'] as Task['status'][]).forEach((status) => {
+        const ids = tasks.filter((task) => task.status === status).map((task) => task.id);
+        const prevOrder = prev[status] || [];
+        const filtered = prevOrder.filter((id) => ids.includes(id));
+        const missing = ids.filter((id) => !filtered.includes(id));
+        const merged = [...filtered, ...missing];
+
+        const isDifferent =
+          merged.length !== prevOrder.length ||
+          merged.some((id, idx) => id !== prevOrder[idx]);
+
+        if (isDifferent) {
+          next[status] = merged;
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [tasks]);
+
   // Функция сортировки задач
-  const sortTasks = (tasks: Task[], sortBy: string): Task[] => {
+  const sortTasks = useCallback((tasks: Task[], sortBy: string, columnStatus: Task['status']): Task[] => {
     const sorted = [...tasks];
 
     switch (sortBy) {
@@ -88,22 +123,39 @@ export function TaskBoard() {
         return sorted.sort((a, b) => b.actualTime - a.actualTime);
 
       case 'custom':
-        return sorted;
+        return sorted.sort((a, b) => {
+          const order = customOrder[columnStatus] || [];
+          const indexA = order.indexOf(a.id);
+          const indexB = order.indexOf(b.id);
+
+          if (indexA === -1 && indexB === -1) return 0;
+          if (indexA === -1) return 1;
+          if (indexB === -1) return -1;
+          return indexA - indexB;
+        });
 
       case 'default':
       default:
         // По умолчанию: сначала с активным таймером, затем по дате создания
-        return sorted.sort((a, b) => {
-          if (a.status === 'IN_PROGRESS') {
+        if (columnStatus === 'IN_PROGRESS') {
+          return sorted.sort((a, b) => {
             const aHasActiveTimer = a.startTime && !a.endTime;
             const bHasActiveTimer = b.startTime && !b.endTime;
+
             if (aHasActiveTimer && !bHasActiveTimer) return -1;
             if (!aHasActiveTimer && bHasActiveTimer) return 1;
-          }
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        });
+
+            const aUpdated = new Date(a.updatedAt).getTime();
+            const bUpdated = new Date(b.updatedAt).getTime();
+            return aUpdated - bUpdated;
+          });
+        }
+
+        return sorted.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
     }
-  };
+  }, [customOrder]);
 
   // Фильтрация и сортировка задач по статусу
   const categorizedTasks = useMemo(() => {
@@ -112,11 +164,11 @@ export function TaskBoard() {
     const completed = tasks.filter((task) => task.status === 'COMPLETED');
 
     return {
-      BACKLOG: sortTasks(backlog, sortOptions.BACKLOG),
-      IN_PROGRESS: sortTasks(inProgress, sortOptions.IN_PROGRESS),
-      COMPLETED: sortTasks(completed, sortOptions.COMPLETED),
+      BACKLOG: sortTasks(backlog, sortOptions.BACKLOG, 'BACKLOG'),
+      IN_PROGRESS: sortTasks(inProgress, sortOptions.IN_PROGRESS, 'IN_PROGRESS'),
+      COMPLETED: sortTasks(completed, sortOptions.COMPLETED, 'COMPLETED'),
     };
-  }, [tasks, sortOptions]);
+  }, [tasks, sortOptions, sortTasks]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -137,10 +189,43 @@ export function TaskBoard() {
     if (!task) return;
 
     // Определяем новый статус из ID контейнера
-    const newStatus = over.id as Task['status'];
+    const overId = over.id as string;
+    let newStatus: Task['status'] | null = null;
+
+    if (overId === 'BACKLOG' || overId === 'IN_PROGRESS' || overId === 'COMPLETED') {
+      newStatus = overId as Task['status'];
+    } else {
+      const overTask = tasks.find((t) => t.id === overId);
+      if (overTask) {
+        newStatus = overTask.status;
+      }
+    }
+
+    if (!newStatus) {
+      return;
+    }
 
     // Проверка бизнес-логики перетаскивания
-    if (task.status === newStatus) return;
+    if (task.status === newStatus) {
+      if (sortOptions[newStatus] === 'custom') {
+        const baseOrder = customOrder[newStatus] && customOrder[newStatus].length
+          ? customOrder[newStatus]
+          : tasks.filter((t) => t.status === newStatus).map((t) => t.id);
+
+        const activeIndex = baseOrder.indexOf(taskId);
+        const overTaskId = overId;
+        const overIndex = baseOrder.indexOf(overTaskId);
+
+        if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+          const newOrder = arrayMove([...baseOrder], activeIndex, overIndex);
+          setCustomOrder((prev) => ({
+            ...prev,
+            [newStatus]: newOrder,
+          }));
+        }
+      }
+      return;
+    }
 
     // BACKLOG → IN_PROGRESS или COMPLETED: OK
     // IN_PROGRESS → COMPLETED: только если таймер запущен, иначе NO
@@ -149,29 +234,57 @@ export function TaskBoard() {
     // COMPLETED → BACKLOG: NO
 
     if (task.status === 'IN_PROGRESS') {
-      if (newStatus === 'COMPLETED') {
-        // Можно перенести только если таймер запущен
-        const hasActiveTimer = task.startTime && !task.endTime;
-        if (!hasActiveTimer) {
-          alert('Можно перенести в "Выполненные" только задачи с запущенным таймером');
-          return;
-        }
-      } else if (newStatus === 'BACKLOG') {
-        alert('Нельзя перенести задачу из "В процессе" обратно в "Задачи"');
+      if (newStatus === 'BACKLOG') {
+        setInfoModal({
+          title: 'Перемещение недоступно',
+          description: 'Задачу из колонки «В процессе» нельзя вернуть в «Задачи». Завершите её или отмените работу.',
+        });
         return;
       }
     }
 
     if (task.status === 'COMPLETED' && newStatus === 'BACKLOG') {
-      alert('Нельзя перенести выполненную задачу обратно в "Задачи"');
+      setInfoModal({
+        title: 'Перемещение недоступно',
+        description: 'Завершённые задачи нельзя возвращать в колонку «Задачи».',
+      });
       return;
     }
+
+    setCustomOrder((prev) => {
+      const statuses: Task['status'][] = ['BACKLOG', 'IN_PROGRESS', 'COMPLETED'];
+      const next = { ...prev } as Record<Task['status'], string[]>;
+
+      statuses.forEach((status) => {
+        next[status] = (next[status] || []).filter((id) => id !== taskId);
+      });
+
+      if (sortOptions[newStatus] === 'custom') {
+        const targetOrder = [...(next[newStatus] || [])];
+        const overTaskId = overId;
+
+        let insertIndex = targetOrder.length;
+        if (overTaskId !== newStatus && targetOrder.includes(overTaskId)) {
+          insertIndex = targetOrder.indexOf(overTaskId);
+        }
+
+        if (!targetOrder.includes(taskId)) {
+          targetOrder.splice(insertIndex, 0, taskId);
+          next[newStatus] = targetOrder;
+        }
+      }
+
+      return next;
+    });
 
     try {
       await updateTaskStatus(taskId, newStatus);
     } catch (error) {
       console.error('Error updating task status:', error);
-      alert('Ошибка при перемещении задачи');
+      setInfoModal({
+        title: 'Не удалось переместить задачу',
+        description: 'Проверьте подключение к интернету и попробуйте снова.',
+      });
     }
   };
 
@@ -198,10 +311,18 @@ export function TaskBoard() {
   };
 
   const handleSortChange = (status: 'BACKLOG' | 'IN_PROGRESS' | 'COMPLETED', sortBy: string) => {
-    setSortOptions({
-      ...sortOptions,
+    setSortOptions((prev) => ({
+      ...prev,
       [status]: sortBy,
-    });
+    }));
+
+    if (sortBy === 'custom') {
+      const currentOrder = categorizedTasks[status].map((task) => task.id);
+      setCustomOrder((prev) => ({
+        ...prev,
+        [status]: currentOrder,
+      }));
+    }
   };
 
   if (isLoading) {
@@ -248,7 +369,6 @@ export function TaskBoard() {
           status="BACKLOG"
           description="Запланированные задачи"
           tasks={categorizedTasks.BACKLOG}
-          onTaskClick={() => {}}
           onTaskSave={handleTaskSave}
           onTaskDelete={handleTaskDelete}
           isDeveloperMode={isDeveloperMode}
@@ -260,7 +380,6 @@ export function TaskBoard() {
           status="IN_PROGRESS"
           description="Активные задачи"
           tasks={categorizedTasks.IN_PROGRESS}
-          onTaskClick={() => {}}
           onTaskSave={handleTaskSave}
           onTaskDelete={handleTaskDelete}
           isDeveloperMode={isDeveloperMode}
@@ -272,7 +391,6 @@ export function TaskBoard() {
           status="COMPLETED"
           description="Завершенные задачи"
           tasks={categorizedTasks.COMPLETED}
-          onTaskClick={() => {}}
           onTaskSave={handleTaskSave}
           onTaskDelete={handleTaskDelete}
           isDeveloperMode={isDeveloperMode}
@@ -289,6 +407,16 @@ export function TaskBoard() {
           </div>
         ) : null}
       </DragOverlay>
+
+      <ConfirmModal
+        isOpen={infoModal !== null}
+        title={infoModal?.title || ''}
+        description={infoModal?.description}
+        confirmText="Понятно"
+        showCancel={false}
+        onConfirm={() => setInfoModal(null)}
+        onClose={() => setInfoModal(null)}
+      />
     </DndContext>
   );
 }

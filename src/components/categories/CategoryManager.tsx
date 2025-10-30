@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCategories } from '@/hooks/useCategories';
 import { Category } from '@/types/task';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
 interface CategoryManagerProps {
   isOpen: boolean;
@@ -16,6 +17,21 @@ export function CategoryManager({ isOpen, onClose }: CategoryManagerProps) {
     name: '',
     color: '',
   });
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -33,54 +49,72 @@ export function CategoryManager({ isOpen, onClose }: CategoryManagerProps) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Вы уверены? Категория будет удалена, но задачи сохранятся.')) {
-      try {
-        await deleteCategory(id);
-      } catch (error) {
-        console.error('Error deleting category:', error);
-      }
+  const handleDelete = (id: string) => {
+    setPendingDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return;
+
+    try {
+      await deleteCategory(pendingDeleteId);
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      setErrorMessage('Не удалось удалить категорию. Попробуйте снова.');
+    } finally {
+      setPendingDeleteId(null);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">
+    <>
+    <div 
+      className="fixed inset-0 bg-white/20 backdrop-blur-md flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div 
+        className="relative bg-white/95 backdrop-blur-sm rounded-3xl p-8 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-6 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors rounded-full p-2"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">
             Управление категориями
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+          <p className="text-sm text-gray-600 mt-2">
+            Изменяйте названия и цвета ваших категорий для лучшей визуализации.
+          </p>
         </div>
 
         {categories.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>Нет категорий</p>
-            <p className="text-sm mt-2">Создайте категорию при добавлении задачи</p>
+          <div className="text-center py-12 text-gray-400">
+            <p className="font-medium">Категории ещё не созданы</p>
+            <p className="text-sm mt-2">Создайте их при добавлении задач</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {categories.map((category) => (
               <div
                 key={category.id}
-                className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+                className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-2xl hover:border-blue-300 transition-colors bg-white/80"
               >
                 {editingId === category.id ? (
                   <>
@@ -90,7 +124,7 @@ export function CategoryManager({ isOpen, onClose }: CategoryManagerProps) {
                       onChange={(e) =>
                         setEditData({ ...editData, color: e.target.value })
                       }
-                      className="w-10 h-10 border border-gray-300 rounded cursor-pointer"
+                      className="w-12 h-12 border border-gray-300 rounded-2xl cursor-pointer"
                     />
                     <input
                       type="text"
@@ -98,12 +132,12 @@ export function CategoryManager({ isOpen, onClose }: CategoryManagerProps) {
                       onChange={(e) =>
                         setEditData({ ...editData, name: e.target.value })
                       }
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                       autoFocus
                     />
                     <button
                       onClick={() => handleSave(category.id)}
-                      className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
+                      className="p-2.5 text-green-600 hover:bg-green-50 rounded-2xl transition-colors"
                       title="Сохранить"
                     >
                       <svg
@@ -122,7 +156,7 @@ export function CategoryManager({ isOpen, onClose }: CategoryManagerProps) {
                     </button>
                     <button
                       onClick={() => setEditingId(null)}
-                      className="p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                      className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-2xl transition-colors"
                       title="Отмена"
                     >
                       <svg
@@ -143,15 +177,15 @@ export function CategoryManager({ isOpen, onClose }: CategoryManagerProps) {
                 ) : (
                   <>
                     <div
-                      className="w-10 h-10 rounded"
+                      className="w-12 h-12 rounded-2xl"
                       style={{ backgroundColor: category.color }}
                     />
-                    <span className="flex-1 text-gray-900 font-medium">
+                    <span className="flex-1 text-gray-900 font-semibold">
                       {category.name}
                     </span>
                     <button
                       onClick={() => startEditing(category)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-2xl transition-colors"
                       title="Редактировать"
                     >
                       <svg
@@ -170,7 +204,7 @@ export function CategoryManager({ isOpen, onClose }: CategoryManagerProps) {
                     </button>
                     <button
                       onClick={() => handleDelete(category.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                      className="p-2.5 text-red-600 hover:bg-red-50 rounded-2xl transition-colors"
                       title="Удалить"
                     >
                       <svg
@@ -195,6 +229,28 @@ export function CategoryManager({ isOpen, onClose }: CategoryManagerProps) {
         )}
       </div>
     </div>
+
+    <ConfirmModal
+      isOpen={pendingDeleteId !== null}
+      title="Удалить категорию?"
+      description="Категория будет удалена, но задачи сохранятся без категории."
+      confirmText="Удалить"
+      cancelText="Отмена"
+      variant="danger"
+      onConfirm={confirmDelete}
+      onClose={() => setPendingDeleteId(null)}
+    />
+
+    <ConfirmModal
+      isOpen={Boolean(errorMessage)}
+      title="Ошибка"
+      description={errorMessage}
+      confirmText="Понятно"
+      showCancel={false}
+      onConfirm={() => setErrorMessage(null)}
+      onClose={() => setErrorMessage(null)}
+    />
+    </>
   );
 }
 
