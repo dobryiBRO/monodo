@@ -10,7 +10,7 @@ export interface Task {
   categoryId?: string;
   createdAt: Date;
   updatedAt: Date;
-  completedAt?: Date;
+  completedAt?: Date | undefined;
   day: Date;
   category?: Category;
 }

@@ -24,9 +24,9 @@ export function TaskColumn({ title, status, description }: TaskColumnProps) {
       expectedTime: 30,
       actualTime: 0,
       userId: 'mock-user-id',
-     createdAt: new Date(),
+      createdAt: new Date(),
       updatedAt: new Date(),
-      completedAt: status === 'COMPLETED' ? new Date() : null,
+      completedAt: status === 'COMPLETED' ? new Date() : undefined,
      day: new Date(),
     }
   ];
