@@ -40,6 +40,7 @@ export function TaskColumn({ title, status, description }: TaskColumnProps) {
         <p className="text-sm text-gray-600">{description}</p>
       </div>
       
+	  
       <div className="p-4 min-h-[400px]">
         <div className="space-y-3">
           {mockTasks.map((task) => (
