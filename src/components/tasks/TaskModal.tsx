@@ -124,8 +124,8 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
-              disabled={isSubmitting || (isCompleted && task)}
-              readOnly={isCompleted && task}
+              disabled={isSubmitting || (isCompleted && !!task)}
+              readOnly={isCompleted && !!task}
             />
           </div>
 
@@ -139,8 +139,8 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={3}
-              disabled={isSubmitting || (isCompleted && task)}
-              readOnly={isCompleted && task}
+              disabled={isSubmitting || (isCompleted && !!task)}
+              readOnly={isCompleted && !!task}
             />
           </div>
 
@@ -153,7 +153,7 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
               value={formData.priority}
               onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'LOW' | 'HIGH' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={isSubmitting || (isCompleted && task)}
+              disabled={isSubmitting || (isCompleted && !!task)}
             >
               <option value="LOW">Низкий</option>
               <option value="HIGH">Высокий</option>
@@ -233,8 +233,8 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={isSubmitting || task}
-                readOnly={task}
+                disabled={isSubmitting || !!task}
+                readOnly={!!task}
               />
             </div>
           )}
@@ -250,8 +250,8 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
               onChange={(e) => setFormData({ ...formData, actualTime: parseInt(e.target.value) || 0 })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="0"
-              disabled={isSubmitting || (isInProgress && hasActiveTimer) || (isCompleted && task)}
-              readOnly={(isInProgress && hasActiveTimer) || (isCompleted && task)}
+              disabled={isSubmitting || (isInProgress && hasActiveTimer) || (isCompleted && !!task)}
+              readOnly={(isInProgress && hasActiveTimer) || (isCompleted && !!task)}
             />
             {isInProgress && hasActiveTimer && (
               <p className="text-xs text-gray-500 mt-1">
