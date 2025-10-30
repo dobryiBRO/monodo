@@ -3,14 +3,21 @@ export interface Task {
   title: string;
   description?: string;
   status: 'BACKLOG' | 'IN_PROGRESS' | 'COMPLETED';
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-  expectedTime?: number; // in minutes
-  actualTime?: number; // in minutes
+  priority: 'LOW' | 'HIGH';
+  
+  // Время в секундах
+  expectedTime?: number; // in seconds
+  actualTime: number; // in seconds (default 0)
+  
+  // Временные метки
+  startTime?: Date; // Фактическое время начала работы
+  endTime?: Date; // Время завершения
+  
   userId: string;
   categoryId?: string;
   createdAt: Date;
   updatedAt: Date;
-  completedAt?: Date | undefined;
+  completedAt?: Date;
   day: Date;
   category?: Category;
 }

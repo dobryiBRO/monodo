@@ -6,6 +6,7 @@ import { TaskBoard } from '@/components/tasks/TaskBoard';
 import { CalendarModal } from '@/components/CalendarModal';
 import { DeveloperMode } from '@/components/DeveloperMode';
 import { DataMigration } from '@/components/DataMigration';
+import { Header } from '@/components/layout/Header';
 
 export default function Home() {
   const [showCalendar, setShowCalendar] = useState(false);
@@ -13,18 +14,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <DataMigration />
       
       <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            monodo
-          </h1>
-          <p className="text-gray-600">
-            Vash personalnyy task-menedzher
-          </p>
-        </div>
 
         {/* Daily Progress */}
         <div className="mb-6">
