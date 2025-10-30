@@ -19,14 +19,17 @@ export function TaskColumn({ title, status, description }: TaskColumnProps) {
       id: '1',
       title: 'Example task',
       description: 'Task description',
+      status: status,
       priority: 'MEDIUM' as const,
       expectedTime: 30,
       actualTime: 0,
+      userId: 'mock-user-id',
+      categoryId: null,
       category: null,
-      createdAt: new Date(),
+     createdAt: new Date(),
       updatedAt: new Date(),
       completedAt: status === 'COMPLETED' ? new Date() : null,
-      day: new Date(),
+     day: new Date(),
     }
   ];
 
