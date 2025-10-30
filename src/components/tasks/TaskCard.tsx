@@ -263,7 +263,7 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
               </span>
               {task.expectedTime && (
                 <span className="text-xs">
-                  План/Факт: {Math.round((task.expectedTime / task.actualTime) * 100)}%
+                  План/Факт: {Math.round((task.expectedTime / (task.actualTime || 1)) * 100)}%
                 </span>
               )}
             </div>

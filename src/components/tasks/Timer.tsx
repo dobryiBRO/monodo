@@ -15,11 +15,17 @@ export function Timer({ task }: TimerProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const actualTimeRef = useRef(task.actualTime); // Ref для отслеживания актуального времени
 
   // Определяем, работаем ли с таймером (обратный отсчет) или секундомером
   const hasExpectedTime = task.expectedTime && task.expectedTime > 0;
   const hasStartedBefore = task.actualTime > 0;
   const isTimer = hasExpectedTime && !hasStartedBefore;
+
+  // Синхронизируем ref с prop
+  useEffect(() => {
+    actualTimeRef.current = task.actualTime;
+  }, [task.actualTime]);
 
   // Вычисляем начальное время
   useEffect(() => {
@@ -39,7 +45,7 @@ export function Timer({ task }: TimerProps) {
       setIsRunning(false);
       setIsPaused(false);
     }
-  }, [task.id, task.expectedTime, task.actualTime, task.startTime, task.endTime]);
+  }, [task.id, task.expectedTime, task.actualTime, task.startTime, task.endTime, isTimer]);
 
   // Управление таймером/секундомером
   useEffect(() => {
@@ -60,9 +66,10 @@ export function Timer({ task }: TimerProps) {
           }
         });
 
-        // Обновляем actualTime в БД каждую секунду
+        // Обновляем actualTime в БД каждую секунду, используя ref для актуального значения
+        actualTimeRef.current += 1;
         updateTask(task.id, {
-          actualTime: task.actualTime + 1,
+          actualTime: actualTimeRef.current,
         }).catch(console.error);
       }, 1000);
     } else {
@@ -77,7 +84,7 @@ export function Timer({ task }: TimerProps) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, isPaused, isTimer, task.id]);
+  }, [isRunning, isPaused, isTimer, task.id, updateTask]);
 
   const handleStart = async () => {
     try {

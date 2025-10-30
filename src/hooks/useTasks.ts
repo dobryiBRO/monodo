@@ -132,13 +132,13 @@ export function useTasks(day?: Date) {
     }
   };
 
-  const updateTaskStatus = async (id: string, status: Task['status']) => {
+  const updateTaskStatus = async (id: string, newStatus: Task['status']) => {
     try {
       if (status === 'authenticated') {
         const response = await fetch(`/api/tasks/${id}/status`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status }),
+          body: JSON.stringify({ status: newStatus }),
         });
 
         if (!response.ok) {
@@ -149,7 +149,7 @@ export function useTasks(day?: Date) {
         setTasks(tasks.map((task) => (task.id === id ? updatedTask : task)));
         return updatedTask;
       } else {
-        return updateTask(id, { status });
+        return updateTask(id, { status: newStatus });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

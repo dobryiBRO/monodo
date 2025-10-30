@@ -35,7 +35,7 @@ export function DataMigration() {
         migrateData(localData);
       }
     }
-  }, [status]);
+  }, [status, isMigrating]);
 
   const migrateData = async (localData: ReturnType<typeof exportLocalData>) => {
     setIsMigrating(true);

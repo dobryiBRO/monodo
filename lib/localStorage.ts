@@ -223,7 +223,7 @@ export function deleteLocalCategory(id: string): boolean {
   }
 
   const categories = getLocalCategories();
-  const filteredCategories = categories.filter(c => c.id === id);
+  const filteredCategories = categories.filter(c => c.id !== id);
   
   if (filteredCategories.length === categories.length) return false;
 
