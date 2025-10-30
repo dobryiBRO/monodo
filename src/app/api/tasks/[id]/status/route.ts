@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 // PATCH /api/tasks/[id]/status - Изменение статуса задачи (для drag-and-drop)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,6 +15,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { status } = body;
 
@@ -28,7 +29,7 @@ export async function PATCH(
     // Проверка существования задачи и прав доступа
     const existingTask = await prisma.task.findUnique({
       where: {
-        id: params.id,
+        id: id,
         userId: (session.user as any).id,
       },
     });
@@ -56,7 +57,7 @@ export async function PATCH(
 
     const task = await prisma.task.update({
       where: {
-        id: params.id,
+        id: id,
       },
       data: updateData,
       include: {

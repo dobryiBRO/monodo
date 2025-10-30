@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 // PUT /api/categories/[id] - Обновление категории
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,13 +15,14 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { name, color } = body;
 
     // Проверка существования категории и прав доступа
     const existingCategory = await prisma.category.findUnique({
       where: {
-        id: params.id,
+        id: id,
         userId: (session.user as any).id,
       },
     });
@@ -39,7 +40,7 @@ export async function PUT(
         where: {
           userId: (session.user as any).id,
           name,
-          id: { not: params.id },
+          id: { not: id },
         },
       });
 
@@ -53,7 +54,7 @@ export async function PUT(
 
     const category = await prisma.category.update({
       where: {
-        id: params.id,
+        id: id,
       },
       data: {
         ...(name !== undefined && { name }),
@@ -74,7 +75,7 @@ export async function PUT(
 // DELETE /api/categories/[id] - Удаление категории
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -83,10 +84,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     // Проверка существования категории и прав доступа
     const category = await prisma.category.findUnique({
       where: {
-        id: params.id,
+        id: id,
         userId: (session.user as any).id,
       },
       include: {
@@ -106,7 +109,7 @@ export async function DELETE(
     // При удалении категории, связанные задачи не удаляются (onDelete: SetNull)
     await prisma.category.delete({
       where: {
-        id: params.id,
+        id: id,
       },
     });
 
