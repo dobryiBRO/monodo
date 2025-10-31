@@ -26,7 +26,7 @@ export function Timer({ task, actions }: TimerProps) {
   
   // ИСПРАВЛЕНИЕ: Определяем режим таймера ОДИН РАЗ при монтировании, чтобы он не менялся
   const isTimerRef = useRef<boolean>(
-    (task.expectedTime && task.expectedTime > 0) && task.actualTime === 0
+    Boolean((task.expectedTime && task.expectedTime > 0) && task.actualTime === 0)
   );
 
   // ДИАГНОСТИКА: Логируем все важные параметры
