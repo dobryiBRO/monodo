@@ -54,7 +54,6 @@ export async function PATCH(
       updateData.startTime = null;
       updateData.endTime = null;
       updateData.completedAt = null;
-      updateData.actualTime = 0; // Сброс для свежего запуска таймера
     }
 
     const task = await prisma.task.update({
