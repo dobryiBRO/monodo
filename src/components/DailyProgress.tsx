@@ -36,6 +36,15 @@ export function DailyProgress() {
       const percentage = calculateCompletionPercentage(completed, inProgress);
       const color = getPercentageColor(percentage);
 
+      console.log('DailyProgress DEBUG:', {
+        date: dateStr,
+        isToday: isToday(date),
+        completed,
+        inProgress,
+        percentage,
+        totalTasks: dayTasks.length,
+      });
+
       return {
         date,
         completed,
