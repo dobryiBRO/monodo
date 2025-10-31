@@ -21,6 +21,13 @@ export function DailyProgress() {
     const last7Days = getLastNDays(7);
     
     console.log('getLastNDays result:', last7Days.map(d => format(d, 'yyyy-MM-dd')));
+    console.log('All tasks with dates:', tasks.map(t => ({ 
+      id: t.id, 
+      title: t.title, 
+      status: t.status,
+      day: format(new Date(t.day), 'yyyy-MM-dd'),
+      dayRaw: t.day 
+    })));
 
     return last7Days.map((date) => {
       const dateStr = format(date, 'yyyy-MM-dd');
