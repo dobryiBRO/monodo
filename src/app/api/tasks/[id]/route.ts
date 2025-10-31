@@ -81,6 +81,23 @@ export async function PUT(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
+    // Серверный предохранитель: если устанавливаем startTime, сбрасываем другие активные таймеры
+    if (startTime !== undefined && startTime !== null) {
+      await prisma.task.updateMany({
+        where: {
+          userId: (session.user as any).id,
+          id: { not: id },
+          startTime: { not: null },
+          endTime: null,
+          status: 'IN_PROGRESS',
+        },
+        data: {
+          startTime: null,
+          endTime: null,
+        },
+      });
+    }
+
     const task = await prisma.task.update({
       where: {
         id: id,

@@ -44,15 +44,15 @@ export function Timer({ task, actions }: TimerProps) {
       setTime(task.actualTime);
     }
 
-    // Проверяем, запущен ли таймер
-    if (task.startTime && !task.endTime) {
+    // Проверяем, запущен ли таймер (только если IN_PROGRESS и корректные поля)
+    if (task.status === 'IN_PROGRESS' && task.startTime && !task.endTime) {
       setIsRunning(true);
       setIsPaused(false);
     } else {
       setIsRunning(false);
       setIsPaused(false);
     }
-  }, [task.id, task.expectedTime, task.actualTime, task.startTime, task.endTime, isTimer]);
+  }, [task.id, task.status, task.expectedTime, task.actualTime, task.startTime, task.endTime, isTimer]);
 
   // Управление таймером/секундомером
   useEffect(() => {
@@ -98,19 +98,23 @@ export function Timer({ task, actions }: TimerProps) {
       // Проверяем, есть ли другой активный таймер
       const activeTimer = getActiveTimerTask();
       if (activeTimer && activeTimer.id !== task.id) {
-        // Останавливаем предыдущий таймер
+        // Останавливаем предыдущий таймер (полное отключение)
         await stopActiveTimer();
         // Обновляем список задач, чтобы предыдущий таймер точно остановился
         await refresh();
+        // Небольшая пауза для синхронизации
+        await new Promise(resolve => setTimeout(resolve, 100));
         // Показываем предупреждение на 3 секунды
         setShowWarning(true);
         setTimeout(() => setShowWarning(false), 3000);
       }
       
-      // Запускаем текущий таймер
+      // Запускаем текущий таймер (серверный предохранитель отключит другие)
       await updateTask(task.id, {
         startTime: new Date(),
       });
+      // Обновляем список, чтобы карточки упорядочились
+      await refresh();
       setIsRunning(true);
       setIsPaused(false);
     } catch (error) {
@@ -133,6 +137,7 @@ export function Timer({ task, actions }: TimerProps) {
         endTime: null as unknown as any,
         actualTime: actualTimeRef.current,
       });
+      await refresh(); // Обновляем список, чтобы карточка упала вниз
       setIsRunning(false);
       setIsPaused(false);
     } catch (error) {
