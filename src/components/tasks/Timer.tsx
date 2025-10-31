@@ -10,10 +10,11 @@ interface TimerProps {
 }
 
 export function Timer({ task }: TimerProps) {
-  const { updateTask, updateTaskStatus } = useTasks();
+  const { updateTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer } = useTasks();
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const actualTimeRef = useRef(task.actualTime); // Ref для отслеживания актуального времени
 
@@ -88,6 +89,16 @@ export function Timer({ task }: TimerProps) {
 
   const handleStart = async () => {
     try {
+      // Проверяем, есть ли другой активный таймер
+      const activeTimer = getActiveTimerTask();
+      if (activeTimer && activeTimer.id !== task.id) {
+        // Останавливаем предыдущий таймер
+        await stopActiveTimer();
+        // Показываем предупреждение на 3 секунды
+        setShowWarning(true);
+        setTimeout(() => setShowWarning(false), 3000);
+      }
+      
       await updateTask(task.id, {
         startTime: new Date(),
       });
@@ -179,6 +190,13 @@ export function Timer({ task }: TimerProps) {
   // Таймер запущен
   return (
     <div className="space-y-2">
+      {/* Предупреждение о переключении таймера */}
+      {showWarning && (
+        <div className="text-xs text-orange-600 font-medium bg-orange-50 border border-orange-200 rounded px-2 py-1 animate-pulse">
+          ⚠️ Предыдущий таймер остановлен
+        </div>
+      )}
+      
       <div className="flex items-center gap-2">
         <span className={`text-lg font-mono font-semibold ${getTimeColor()}`}>
           {displayTime()}

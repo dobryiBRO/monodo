@@ -74,7 +74,7 @@ export function CategorySelect({
                   className="w-4 h-4 rounded"
                   style={{ backgroundColor: selectedCategory.color }}
                 />
-                <span className="text-sm">{selectedCategory.name}</span>
+                <span className="text-sm font-semibold">{selectedCategory.name}</span>
               </>
             ) : (
               <span className="text-sm text-gray-500">Выберите категорию</span>
@@ -124,7 +124,7 @@ export function CategorySelect({
                     className="w-4 h-4 rounded"
                     style={{ backgroundColor: category.color }}
                   />
-                  <span className="text-sm">{category.name}</span>
+                  <span className="text-sm font-semibold">{category.name}</span>
                 </button>
               ))}
             </div>

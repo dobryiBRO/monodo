@@ -157,6 +157,22 @@ export function useTasks(day?: Date) {
     }
   };
 
+  // Получить активный таймер (задача со startTime, но без endTime)
+  const getActiveTimerTask = (): Task | null => {
+    return tasks.find((task) => task.startTime && !task.endTime && task.status === 'IN_PROGRESS') || null;
+  };
+
+  // Остановить активный таймер
+  const stopActiveTimer = async (): Promise<void> => {
+    const activeTask = getActiveTimerTask();
+    if (activeTask) {
+      await updateTask(activeTask.id, {
+        startTime: undefined,
+        endTime: undefined,
+      });
+    }
+  };
+
   return {
     tasks,
     isLoading,
@@ -166,6 +182,8 @@ export function useTasks(day?: Date) {
     deleteTask,
     updateTaskStatus,
     refresh: fetchTasks,
+    getActiveTimerTask,
+    stopActiveTimer,
   };
 }
 

@@ -46,12 +46,8 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
 
   // Определяем стиль фона карточки
   const getCardStyle = () => {
-    if (!task.category) {
-      return {};
-    }
-
-    const baseColor = task.category.color;
-
+    const baseColor = task.category?.color || '#6B7280'; // fallback на серый
+    
     if (task.status === 'COMPLETED') {
       return {
         background: createCompletedGradient(baseColor),
@@ -60,11 +56,15 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
       };
     }
 
-    return {
-      background: createCategoryGradient(baseColor, 0.18),
-      borderColor: hexToRgba(baseColor, 0.35),
-      boxShadow: `0 10px 24px ${hexToRgba(baseColor, 0.18)}`,
-    };
+    if (task.category) {
+      return {
+        background: createCategoryGradient(baseColor, 0.18),
+        borderColor: hexToRgba(baseColor, 0.35),
+        boxShadow: `0 10px 24px ${hexToRgba(baseColor, 0.18)}`,
+      };
+    }
+
+    return {};
   };
 
   // Проверка просрочки времени начала
@@ -128,7 +128,7 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
                   className="w-3 h-3 rounded-md"
                   style={{ backgroundColor: task.category.color }}
                 />
-                <span className="text-gray-800">{task.category.name}</span>
+                <span className="text-gray-800 font-semibold">{task.category.name}</span>
               </div>
             )}
             {task.expectedTime && (
@@ -204,7 +204,7 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
                   className="w-3 h-3 rounded-md"
                   style={{ backgroundColor: task.category.color }}
                 />
-                <span className="text-gray-800 font-medium">{task.category.name}</span>
+                <span className="text-gray-800 font-semibold">{task.category.name}</span>
               </div>
             )}
             
@@ -232,45 +232,48 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
         style={{ ...style, ...getCardStyle() }}
         {...attributes}
         {...listeners}
-        className="border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl transition-all cursor-grab active:cursor-grabbing text-white"
+        className="border-2 rounded-2xl p-5 hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative overflow-hidden"
       >
+        {/* Полупрозрачный overlay для лучшей читаемости текста */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/30 to-black/20 pointer-events-none" />
+        
         <div
           onClick={(e) => {
             e.stopPropagation();
             onClick();
           }}
-          className="cursor-pointer"
+          className="cursor-pointer relative z-10 text-white"
         >
           <div className="flex justify-between items-start mb-3">
-            <h4 className="font-semibold flex-1 text-base">{task.title}</h4>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold bg-white bg-opacity-25`}>
+            <h4 className="font-bold flex-1 text-base drop-shadow-sm">{task.title}</h4>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/30 backdrop-blur-sm border border-white/40">
               {getPriorityLabel(task.priority)}
             </span>
           </div>
           
-          <div className="space-y-2 text-sm opacity-95 font-medium">
+          <div className="space-y-2 text-sm font-medium drop-shadow-sm">
             {task.category && (
               <div className="flex items-center gap-2">
                 <div
-                  className="w-3 h-3 rounded-md border-2 border-white"
+                  className="w-3 h-3 rounded-md border-2 border-white shadow-sm"
                   style={{ backgroundColor: task.category.color }}
                 />
-                <span>{task.category.name}</span>
+                <span className="font-semibold">{task.category.name}</span>
               </div>
             )}
             
             {task.endTime && (
-              <div className="text-xs font-semibold">
+              <div className="text-xs font-bold">
                 Завершено: {new Date(task.endTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
               </div>
             )}
             
             <div className="flex items-center justify-between pt-1">
-              <span className="text-xs font-semibold">
+              <span className="text-xs font-bold">
                 Время: {Math.round(task.actualTime / 60)} мин
               </span>
               {task.expectedTime && (
-                <span className="text-xs font-semibold">
+                <span className="text-xs font-bold">
                   План/Факт: {Math.round((task.expectedTime / (task.actualTime || 1)) * 100)}%
                 </span>
               )}

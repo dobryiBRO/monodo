@@ -248,14 +248,31 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
               <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Время начала
               </label>
-              <input
-              type="time"
-                value={formData.startTime}
-                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
-                disabled={isSubmitting || !canEditStartTime}
-                readOnly={!canEditStartTime}
-              />
+              <div className="flex gap-2">
+                <input
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
+                  disabled={isSubmitting || !canEditStartTime}
+                  readOnly={!canEditStartTime}
+                />
+                {canEditStartTime && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const now = new Date();
+                      const hours = now.getHours().toString().padStart(2, '0');
+                      const minutes = now.getMinutes().toString().padStart(2, '0');
+                      setFormData({ ...formData, startTime: `${hours}:${minutes}` });
+                    }}
+                    className="px-4 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-colors font-semibold text-sm whitespace-nowrap"
+                    disabled={isSubmitting}
+                  >
+                    Сейчас
+                  </button>
+                )}
+              </div>
               {!canEditStartTime && (
                 <p className="text-xs text-gray-500 mt-1">
                   Время начала устанавливается автоматически при запуске таймера
