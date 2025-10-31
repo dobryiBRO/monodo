@@ -115,7 +115,7 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
         style={{ ...style, ...getCardStyle() }}
         {...attributes}
         {...listeners}
-        className="border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group"
+        className="border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:border-blue-300 transition-all group"
       >
         <div
           onClick={(e) => {
@@ -196,7 +196,7 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
         style={{ ...style, ...getCardStyle() }}
         {...attributes}
         {...listeners}
-        className="border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group"
+        className="border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:border-blue-300 transition-all group"
       >
         <div
           onClick={(e) => {
@@ -305,7 +305,7 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
         style={{ ...style, ...getCardStyle() }}
         {...attributes}
         {...listeners}
-        className="border-2 rounded-2xl p-5 hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative"
+        className="border-2 rounded-2xl p-5 hover:shadow-xl transition-all relative"
       >
         <div
           onClick={(e) => {
