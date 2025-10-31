@@ -19,15 +19,6 @@ export function DailyProgress() {
 
   const progressData = useMemo<DayProgress[]>(() => {
     const last7Days = getLastNDays(7);
-    
-    console.log('getLastNDays result:', last7Days.map(d => format(d, 'yyyy-MM-dd')));
-    console.log('All tasks with dates:', tasks.map(t => ({ 
-      id: t.id, 
-      title: t.title, 
-      status: t.status,
-      day: format(new Date(t.day), 'yyyy-MM-dd'),
-      dayRaw: t.day 
-    })));
 
     return last7Days.map((date) => {
       const dateStr = format(date, 'yyyy-MM-dd');
@@ -44,15 +35,6 @@ export function DailyProgress() {
       // Для сегодняшнего дня (крайний правый) показываем актуальный процент выполненных задач
       const percentage = calculateCompletionPercentage(completed, inProgress);
       const color = getPercentageColor(percentage);
-
-      console.log('DailyProgress DEBUG:', {
-        date: dateStr,
-        isToday: isToday(date),
-        completed,
-        inProgress,
-        percentage,
-        totalTasks: dayTasks.length,
-      });
 
       return {
         date,

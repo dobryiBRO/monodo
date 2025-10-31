@@ -49,18 +49,6 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
   const textPrimaryClass = isWhiteText ? 'text-white' : 'text-gray-900';
   const textSecondaryClass = isWhiteText ? 'text-white/80' : 'text-gray-700';
 
-  // ДИАГНОСТИКА: проверяем что приходит
-  console.log('TaskCard DEBUG:', {
-    taskId: task.id,
-    taskTitle: task.title,
-    hasCategory: !!task.category,
-    categoryColor: task.category?.color,
-    baseColor,
-    scheduledStartTime: task.scheduledStartTime,
-    startTime: task.startTime,
-    status: task.status,
-  });
-
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'HIGH':
@@ -110,13 +98,6 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
     // Если таймер не запущен, но есть плановое - показываем плановое
     if (task.scheduledStartTime) {
       const isOverdue = isScheduledTimeOverdue();
-      console.log('DisplayTime DEBUG:', {
-        taskId: task.id,
-        scheduledStartTime: task.scheduledStartTime,
-        now: new Date().toISOString(),
-        isOverdue,
-        hasStartTime: !!task.startTime,
-      });
       return {
         label: 'План',
         time: new Date(task.scheduledStartTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),

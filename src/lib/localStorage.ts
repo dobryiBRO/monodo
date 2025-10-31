@@ -138,10 +138,17 @@ export function deleteLocalTask(id: string): boolean {
  */
 export function getLocalTasksByDate(date: Date): Task[] {
   const tasks = getLocalTasks();
-  const dateStr = date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
   
   return tasks.filter(task => {
-    const taskDateStr = new Date(task.day).toISOString().split('T')[0];
+    const taskDate = new Date(task.day);
+    const taskYear = taskDate.getFullYear();
+    const taskMonth = String(taskDate.getMonth() + 1).padStart(2, '0');
+    const taskDay = String(taskDate.getDate()).padStart(2, '0');
+    const taskDateStr = `${taskYear}-${taskMonth}-${taskDay}`;
     return taskDateStr === dateStr;
   });
 }
