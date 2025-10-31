@@ -284,8 +284,8 @@ export function TaskBoard({ tasksData: externalTasksData }: TaskBoardProps = {})
     try {
       // Если переносим в COMPLETED, передаём endTime с текущим временем
       const updateOptions = newStatus === 'COMPLETED' ? {
-        endTime: new Date().toISOString(),
-        completedAt: new Date().toISOString(),
+        endTime: new Date(),
+        completedAt: new Date(),
       } : undefined;
       
       await updateTaskStatus(taskId, newStatus, updateOptions);
