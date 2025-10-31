@@ -180,11 +180,18 @@ export function isPastDate(date: Date): boolean {
  */
 export function getLastNDays(n: number): Date[] {
   const days: Date[] = [];
+  const now = new Date();
+  console.log('getLastNDays DEBUG: now =', now.toISOString(), 'n =', n);
+  
   for (let i = n - 1; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
-    days.push(getStartOfDay(date));
+    const startOfDay = getStartOfDay(date);
+    console.log(`  i=${i}: date.getDate()=${date.getDate()}, startOfDay=${startOfDay.toISOString()}`);
+    days.push(startOfDay);
   }
+  
+  console.log('getLastNDays result:', days.map(d => d.toISOString()));
   return days;
 }
 
