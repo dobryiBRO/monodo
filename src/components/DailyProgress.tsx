@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { getLastNDays, calculateCompletionPercentage, getPercentageColor, isToday } from '@/lib/utils';
 import { useTasks } from '@/hooks/useTasks';
+import { Task } from '@/types/task';
 
 interface DayProgress {
   date: Date;
@@ -14,8 +15,13 @@ interface DayProgress {
   color: string;
 }
 
-export function DailyProgress() {
-  const { tasks } = useTasks();
+interface DailyProgressProps {
+  tasks?: Task[];
+}
+
+export function DailyProgress({ tasks: externalTasks }: DailyProgressProps = {}) {
+  const { tasks: hookTasks } = useTasks();
+  const tasks = externalTasks || hookTasks;
 
   const progressData = useMemo<DayProgress[]>(() => {
     const last7Days = getLastNDays(7);
@@ -52,7 +58,7 @@ export function DailyProgress() {
         Прогресс за неделю
       </h2>
       <div className="grid grid-cols-7 gap-4 px-4">
-        {progressData.map((day, index) => {
+        {progressData.map((day) => {
           const isCurrentDay = isToday(day.date);
           const progress = Math.min(Math.max(day.percentage, 0), 100);
           const progressDegrees = progress * 3.6;
@@ -60,7 +66,7 @@ export function DailyProgress() {
           const baseColor = '#E5E7EB';
 
           return (
-            <div key={index} className="flex flex-col items-center gap-3">
+            <div key={format(day.date, 'yyyy-MM-dd')} className="flex flex-col items-center gap-3">
               <div
                 className={`relative w-16 h-16 rounded-full transition-transform duration-300 ${
                   isCurrentDay ? 'scale-110 shadow-lg' : 'shadow-sm'

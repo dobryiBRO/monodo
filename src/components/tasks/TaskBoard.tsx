@@ -19,8 +19,13 @@ import { Task } from '@/types/task';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { arrayMove } from '@dnd-kit/sortable';
 
-export function TaskBoard() {
-  const { tasks, isLoading, error, createTask, updateTask, deleteTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer, refresh } = useTasks();
+interface TaskBoardProps {
+  tasksData?: ReturnType<typeof useTasks>;
+}
+
+export function TaskBoard({ tasksData: externalTasksData }: TaskBoardProps = {}) {
+  const hookTasksData = useTasks();
+  const { tasks, isLoading, error, createTask, updateTask, deleteTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer, refresh } = externalTasksData || hookTasksData;
   const { isDeveloperMode } = useDeveloperMode();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [sortOptions, setSortOptions] = useState({

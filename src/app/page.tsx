@@ -7,10 +7,12 @@ import { CalendarModal } from '@/components/CalendarModal';
 import { DeveloperMode } from '@/components/DeveloperMode';
 import { DataMigration } from '@/components/DataMigration';
 import { Header } from '@/components/layout/Header';
+import { useTasks } from '@/hooks/useTasks';
 
 export default function Home() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [activeTab, setActiveTab] = useState<'tasks' | 'dashboard'>('tasks');
+  const tasksData = useTasks();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -21,7 +23,7 @@ export default function Home() {
 
         {/* Daily Progress */}
         <div className="mb-6">
-          <DailyProgress />
+          <DailyProgress tasks={tasksData.tasks} />
         </div>
 
         {/* Calendar Button */}
@@ -62,7 +64,7 @@ export default function Home() {
 
         {/* Main Content */}
         {activeTab === 'tasks' ? (
-          <TaskBoard />
+          <TaskBoard tasksData={tasksData} />
         ) : (
           <div className="bg-white rounded-3xl p-8 shadow-lg">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
