@@ -23,20 +23,18 @@ export function Timer({ task, actions }: TimerProps) {
   const [showWarning, setShowWarning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const actualTimeRef = useRef(task.actualTime); // Ref для отслеживания актуального времени
-
-  // Определяем, работаем ли с таймером (обратный отсчет) или секундомером
-  const hasExpectedTime = task.expectedTime && task.expectedTime > 0;
-  const hasStartedBefore = task.actualTime > 0;
-  const isTimer = hasExpectedTime && !hasStartedBefore;
+  
+  // ИСПРАВЛЕНИЕ: Определяем режим таймера ОДИН РАЗ при монтировании, чтобы он не менялся
+  const isTimerRef = useRef<boolean>(
+    (task.expectedTime && task.expectedTime > 0) && task.actualTime === 0
+  );
 
   // ДИАГНОСТИКА: Логируем все важные параметры
   console.log('🔍 Timer Debug:', {
     taskId: task.id.substring(0, 8),
     expectedTime: task.expectedTime,
     actualTime: task.actualTime,
-    hasExpectedTime,
-    hasStartedBefore,
-    isTimer,
+    isTimer: isTimerRef.current,
     startTime: task.startTime,
     endTime: task.endTime,
     status: task.status,
@@ -49,11 +47,15 @@ export function Timer({ task, actions }: TimerProps) {
     actualTimeRef.current = task.actualTime;
   }, [task.actualTime]);
 
-  // Вычисляем начальное время
+  // Вычисляем начальное время ТОЛЬКО при изменении ключевых полей
   useEffect(() => {
-    console.log('📊 useEffect [INIT] сработал', { isTimer, expectedTime: task.expectedTime, actualTime: task.actualTime });
+    console.log('📊 useEffect [INIT] сработал', { 
+      isTimer: isTimerRef.current, 
+      expectedTime: task.expectedTime, 
+      actualTime: task.actualTime 
+    });
     
-    if (isTimer) {
+    if (isTimerRef.current) {
       // Таймер: ожидаемое время минус фактическое
       setTime((task.expectedTime || 0) - task.actualTime);
     } else {
@@ -75,17 +77,18 @@ export function Timer({ task, actions }: TimerProps) {
       setIsRunning(false);
       setIsPaused(false);
     }
-  }, [task.id, task.status, task.expectedTime, task.actualTime, task.startTime, task.endTime, isTimer]);
+  // ИСПРАВЛЕНИЕ: Убрали actualTime из зависимостей, чтобы не перезапускать при каждой секунде
+  }, [task.id, task.status, task.expectedTime, task.startTime, task.endTime]);
 
   // Управление таймером/секундомером
   useEffect(() => {
-    console.log('⏱️ useEffect [INTERVAL] сработал', { isRunning, isPaused, isTimer });
+    console.log('⏱️ useEffect [INTERVAL] сработал', { isRunning, isPaused, isTimer: isTimerRef.current });
     
     if (isRunning && !isPaused) {
       console.log('🟢 Запускаем интервал');
       intervalRef.current = setInterval(() => {
         setTime((prevTime) => {
-          if (isTimer) {
+          if (isTimerRef.current) {
             // Таймер: обратный отсчет
             const newTime = prevTime - 1;
             if (newTime <= 0) {
@@ -120,7 +123,8 @@ export function Timer({ task, actions }: TimerProps) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, isPaused, isTimer, task.id, updateTask]);
+  // ИСПРАВЛЕНИЕ: Убрали isTimer из зависимостей, используем ref
+  }, [isRunning, isPaused, task.id, updateTask]);
 
   const handleStart = async () => {
     try {
@@ -201,7 +205,7 @@ export function Timer({ task, actions }: TimerProps) {
 
   // Отображение времени
   const displayTime = () => {
-    if (isTimer && time > 0) {
+    if (isTimerRef.current && time > 0) {
       // Таймер с обратным отсчетом
       return formatTime(time);
     } else if (time < 0) {
@@ -214,7 +218,7 @@ export function Timer({ task, actions }: TimerProps) {
   };
 
   const getTimeColor = () => {
-    if (isTimer) {
+    if (isTimerRef.current) {
       if (time < 0) return 'text-red-600';
       if (time <= 60) return 'text-yellow-600';
       return 'text-gray-800';
@@ -292,7 +296,7 @@ export function Timer({ task, actions }: TimerProps) {
       </div>
 
       {/* Визуальный индикатор просрочки */}
-      {isTimer && time <= 0 && (
+      {isTimerRef.current && time <= 0 && (
         <div className="text-xs text-red-600 font-medium animate-pulse">
           ⚠️ Время истекло!
         </div>
