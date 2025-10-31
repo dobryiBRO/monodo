@@ -129,8 +129,8 @@ export function Timer({ task, actions }: TimerProps) {
   const handleStop = async () => {
     try {
       await updateTask(task.id, {
-        startTime: undefined,
-        endTime: undefined,
+        startTime: null as unknown as any,
+        endTime: null as unknown as any,
         actualTime: actualTimeRef.current,
       });
       setIsRunning(false);

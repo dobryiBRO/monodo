@@ -6,7 +6,9 @@ import { Task } from '@/types/task';
 import { Timer } from './Timer';
 import { 
   hexToRgba,
-  getContrastTextColor 
+  getContrastTextColor,
+  getContrastTextColorOnMixed,
+  isNearWhite 
 } from '@/lib/utils';
 import { useCategories } from '@/hooks/useCategories';
 
@@ -45,7 +47,8 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
 
   const fallbackColor = categories.find((c) => c.id === task.categoryId)?.color || '#6B7280';
   const baseColor = task.category?.color || fallbackColor;
-  const isWhiteText = getContrastTextColor(baseColor) === '#ffffff';
+  const backgroundAlpha = 0.18; // слегка менее прозрачный, чем было (0.14)
+  const isWhiteText = getContrastTextColorOnMixed(baseColor, backgroundAlpha) === '#ffffff';
   const textPrimaryClass = isWhiteText ? 'text-white' : 'text-gray-900';
   const textSecondaryClass = isWhiteText ? 'text-white/80' : 'text-gray-700';
 
@@ -66,10 +69,11 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
 
   // Определяем стиль фона карточки (однотонный от цвета категории)
   const getCardStyle = () => {
+    const borderFallback = isNearWhite(baseColor) ? 'rgba(17,24,39,0.12)' : hexToRgba(baseColor, 0.25);
     return {
-      backgroundColor: hexToRgba(baseColor, 0.14),
-      borderColor: hexToRgba(baseColor, 0.25),
-      boxShadow: `0 10px 24px ${hexToRgba(baseColor, 0.16)}`,
+      backgroundColor: hexToRgba(baseColor, backgroundAlpha),
+      borderColor: borderFallback,
+      boxShadow: `0 10px 24px ${hexToRgba(baseColor, 0.14)}`,
     } as React.CSSProperties;
   };
 

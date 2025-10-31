@@ -167,8 +167,8 @@ export function useTasks(day?: Date) {
     const activeTask = getActiveTimerTask();
     if (activeTask) {
       await updateTask(activeTask.id, {
-        startTime: undefined,
-        endTime: undefined,
+        startTime: null as unknown as any,
+        endTime: null as unknown as any,
       });
     }
   };

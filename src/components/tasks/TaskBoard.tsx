@@ -136,18 +136,17 @@ export function TaskBoard() {
 
       case 'default':
       default:
-        // По умолчанию: сначала с активным таймером, затем по дате создания
+        // По умолчанию: сначала задачи с активным таймером, далее — по дате создания
         if (columnStatus === 'IN_PROGRESS') {
           return sorted.sort((a, b) => {
-            const aHasActiveTimer = a.startTime && !a.endTime;
-            const bHasActiveTimer = b.startTime && !b.endTime;
-
-            if (aHasActiveTimer && !bHasActiveTimer) return -1;
-            if (!aHasActiveTimer && bHasActiveTimer) return 1;
-
-            const aUpdated = new Date(a.updatedAt).getTime();
-            const bUpdated = new Date(b.updatedAt).getTime();
-            return aUpdated - bUpdated;
+            const aActive = Boolean(a.startTime && !a.endTime);
+            const bActive = Boolean(b.startTime && !b.endTime);
+            if (aActive && !bActive) return -1;
+            if (!aActive && bActive) return 1;
+            // среди активных сохраняем порядок (стабильность)
+            if (aActive && bActive) return 0;
+            // среди неактивных — новые выше
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
           });
         }
 

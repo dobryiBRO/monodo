@@ -211,6 +211,55 @@ export function getPercentageColor(percentage: number): string {
   return '#EF4444'; // red
 }
 
+function hexToRgbTuple(hex: string): [number, number, number] {
+  let normalized = hex.replace('#', '');
+  if (normalized.length === 3) {
+    normalized = normalized
+      .split('')
+      .map((char) => char + char)
+      .join('');
+  }
+  const bigint = parseInt(normalized, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return [r, g, b];
+}
+
+export function mixWithWhite(hex: string, alpha: number): string {
+  const [r, g, b] = hexToRgbTuple(hex);
+  const mix = (c: number) => Math.round((1 - alpha) * 255 + alpha * c);
+  const r2 = mix(r);
+  const g2 = mix(g);
+  const b2 = mix(b);
+  const toHex = (c: number) => c.toString(16).padStart(2, '0');
+  return `#${toHex(r2)}${toHex(g2)}${toHex(b2)}`;
+}
+
+function relativeLuminanceFromRgb(r: number, g: number, b: number): number {
+  const srgbToLinear = (c: number) => {
+    const cs = c / 255;
+    return cs <= 0.03928 ? cs / 12.92 : Math.pow((cs + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * srgbToLinear(r) + 0.7152 * srgbToLinear(g) + 0.0722 * srgbToLinear(b);
+}
+
+export function getContrastTextColorOnMixed(hexBackground: string, alpha: number): '#ffffff' | '#111827' {
+  const [r, g, b] = hexToRgbTuple(mixWithWhite(hexBackground, alpha));
+  const l = relativeLuminanceFromRgb(r, g, b);
+  const lw = 1;
+  const ld = relativeLuminanceFromRgb(17, 24, 39); // #111827
+  const contrastWhite = (lw + 0.05) / (l + 0.05);
+  const contrastDark = (l + 0.05) / (ld + 0.05);
+  return contrastWhite >= contrastDark ? '#ffffff' : '#111827';
+}
+
+export function isNearWhite(hex: string): boolean {
+  const [r, g, b] = hexToRgbTuple(hex);
+  const l = relativeLuminanceFromRgb(r, g, b);
+  return l > 0.92; // очень светлый фон
+}
+
 /**
  * Возвращает контрастный цвет текста (#ffffff или #111827) для заданного HEX-фона
  * Выбор делается по наибольшему контрасту по формуле WCAG.

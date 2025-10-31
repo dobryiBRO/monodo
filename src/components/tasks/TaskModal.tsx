@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { Task } from '@/types/task';
 import { CategorySelect } from '@/components/categories/CategorySelect';
 import { minutesToSeconds, secondsToMinutes } from '@/lib/utils';
+import { BaseSelect } from '@/components/ui/BaseSelect';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -194,25 +195,14 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
             <label className="block text-sm font-semibold text-gray-800 mb-2">
               Приоритет
             </label>
-            <div className="relative">
-              <select
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'LOW' | 'HIGH' })}
-                className="w-full px-4 py-3 pr-10 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900 appearance-none bg-white shadow-sm"
-                disabled={isSubmitting || Boolean(isCompleted && task)}
-              >
-                <option value="LOW">Низкий</option>
-                <option value="HIGH">Высокий</option>
-              </select>
-              <svg
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+            <BaseSelect
+              value={formData.priority}
+              onChange={(v) => setFormData({ ...formData, priority: v })}
+              options={[
+                { value: 'LOW', label: 'Низкий' },
+                { value: 'HIGH', label: 'Высокий' },
+              ]}
+            />
           </div>
 
           {/* Категория */}
