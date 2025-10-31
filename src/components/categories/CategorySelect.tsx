@@ -71,13 +71,13 @@ export function CategorySelect({
             {selectedCategory ? (
               <>
                 <div
-                  className="w-4 h-4 rounded"
+                  className="w-5 h-5 rounded-md border-2 border-gray-300"
                   style={{ backgroundColor: selectedCategory.color }}
                 />
-                <span className="text-sm font-semibold">{selectedCategory.name}</span>
+                <span className="text-base font-bold text-gray-900">{selectedCategory.name}</span>
               </>
             ) : (
-              <span className="text-sm text-gray-500">Выберите категорию</span>
+              <span className="text-sm text-gray-500 font-medium">Выберите категорию</span>
             )}
           </span>
           <svg
@@ -121,10 +121,10 @@ export function CategorySelect({
                   className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-blue-50 rounded-2xl transition-colors"
                 >
                   <div
-                    className="w-4 h-4 rounded"
+                    className="w-5 h-5 rounded-md border-2 border-gray-300"
                     style={{ backgroundColor: category.color }}
                   />
-                  <span className="text-sm font-semibold">{category.name}</span>
+                  <span className="text-sm font-bold text-gray-900">{category.name}</span>
                 </button>
               ))}
             </div>

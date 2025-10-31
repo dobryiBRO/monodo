@@ -67,6 +67,22 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
     }
   }, [isOpen, handleDateClick]);
 
+  // Обновляем selectedDayTasks когда tasks изменяются
+  useEffect(() => {
+    if (selectedDate) {
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      const dayTasks = tasks.filter((task) => {
+        const taskDateStr = format(new Date(task.day), 'yyyy-MM-dd');
+        return taskDateStr === dateStr;
+      });
+
+      setSelectedDayTasks({
+        inProgress: dayTasks.filter((t) => t.status === 'IN_PROGRESS'),
+        completed: dayTasks.filter((t) => t.status === 'COMPLETED'),
+      });
+    }
+  }, [tasks, selectedDate]);
+
   if (!isOpen) return null;
 
   const monthStart = startOfMonth(currentMonth);

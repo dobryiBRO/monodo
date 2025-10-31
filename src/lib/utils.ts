@@ -120,6 +120,20 @@ export function createCompletedGradient(categoryColor: string): string {
 }
 
 /**
+ * Создание градиента для задачи в BACKLOG (желтый + цвет категории)
+ */
+export function createBacklogGradient(categoryColor: string): string {
+  return `linear-gradient(135deg, #F59E0B 0%, ${categoryColor} 100%)`;
+}
+
+/**
+ * Создание градиента для задачи в IN_PROGRESS (синий + цвет категории)
+ */
+export function createInProgressGradient(categoryColor: string): string {
+  return `linear-gradient(135deg, #3B82F6 0%, ${categoryColor} 100%)`;
+}
+
+/**
  * Форматирование даты в формат YYYY-MM-DD
  */
 export function formatDate(date: Date): string {

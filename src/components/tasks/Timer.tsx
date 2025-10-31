@@ -10,7 +10,7 @@ interface TimerProps {
 }
 
 export function Timer({ task }: TimerProps) {
-  const { updateTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer } = useTasks();
+  const { updateTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer, refresh } = useTasks();
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -94,11 +94,14 @@ export function Timer({ task }: TimerProps) {
       if (activeTimer && activeTimer.id !== task.id) {
         // Останавливаем предыдущий таймер
         await stopActiveTimer();
+        // Обновляем список задач, чтобы предыдущий таймер точно остановился
+        await refresh();
         // Показываем предупреждение на 3 секунды
         setShowWarning(true);
         setTimeout(() => setShowWarning(false), 3000);
       }
       
+      // Запускаем текущий таймер
       await updateTask(task.id, {
         startTime: new Date(),
       });
@@ -133,11 +136,17 @@ export function Timer({ task }: TimerProps) {
 
   const handleComplete = async () => {
     try {
+      // Сначала сохраняем актуальное время и устанавливаем endTime
       await updateTask(task.id, {
         actualTime: actualTimeRef.current,
+        endTime: new Date(),
       });
 
+      // Затем меняем статус на COMPLETED
       await updateTaskStatus(task.id, 'COMPLETED');
+
+      // Обновляем список задач
+      await refresh();
 
       setIsRunning(false);
       setIsPaused(false);

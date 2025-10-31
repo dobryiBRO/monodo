@@ -279,6 +279,8 @@ export function TaskBoard() {
 
     try {
       await updateTaskStatus(taskId, newStatus);
+      // Явно обновляем список задач после изменения статуса
+      await new Promise(resolve => setTimeout(resolve, 100)); // Небольшая задержка для завершения обновления
     } catch (error) {
       console.error('Error updating task status:', error);
       setInfoModal({

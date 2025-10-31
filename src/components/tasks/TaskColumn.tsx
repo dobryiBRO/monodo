@@ -111,6 +111,32 @@ export function TaskColumn({
     }
   };
 
+  const handleCopyTask = async (task: Task) => {
+    try {
+      // Создаем копию задачи с новыми данными
+      const taskCopy: Partial<Task> = {
+        title: `${task.title} (копия)`,
+        description: task.description,
+        priority: task.priority,
+        expectedTime: task.expectedTime,
+        categoryId: task.categoryId,
+        status: 'BACKLOG', // Копия всегда создается в BACKLOG
+        actualTime: 0,
+        userId: task.userId,
+        day: new Date(),
+        // Сбрасываем временные метки
+        startTime: undefined,
+        endTime: undefined,
+        completedAt: undefined,
+      };
+
+      await onTaskSave(taskCopy);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Ошибка при копировании задачи';
+      setErrorMessage(message);
+    }
+  };
+
   return (
     <div 
       ref={setNodeRef}
@@ -174,6 +200,7 @@ export function TaskColumn({
                 key={task.id}
                 task={task}
                 onClick={() => handleEditTask(task)}
+                onCopy={() => handleCopyTask(task)}
                 onDelete={
                   status === 'BACKLOG' || isDeveloperMode
                     ? () => setPendingDeleteId(task.id)

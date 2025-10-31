@@ -4,16 +4,23 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Task } from '@/types/task';
 import { Timer } from './Timer';
-import { createCompletedGradient, createCategoryGradient, hexToRgba } from '@/lib/utils';
+import { 
+  createCompletedGradient, 
+  createBacklogGradient, 
+  createInProgressGradient, 
+  createCategoryGradient, 
+  hexToRgba 
+} from '@/lib/utils';
 
 interface TaskCardProps {
   task: Task;
   onClick: () => void;
   onDelete?: () => void;
+  onCopy?: () => void;
   isDeveloperMode?: boolean;
 }
 
-export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: TaskCardProps) {
+export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = false }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -56,11 +63,19 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
       };
     }
 
-    if (task.category) {
+    if (task.status === 'IN_PROGRESS') {
       return {
-        background: createCategoryGradient(baseColor, 0.18),
-        borderColor: hexToRgba(baseColor, 0.35),
-        boxShadow: `0 10px 24px ${hexToRgba(baseColor, 0.18)}`,
+        background: createInProgressGradient(baseColor),
+        borderColor: hexToRgba(baseColor, 0.4),
+        boxShadow: `0 10px 24px ${hexToRgba(baseColor, 0.2)}`,
+      };
+    }
+
+    if (task.status === 'BACKLOG') {
+      return {
+        background: createBacklogGradient(baseColor),
+        borderColor: hexToRgba(baseColor, 0.4),
+        boxShadow: `0 8px 20px ${hexToRgba(baseColor, 0.15)}`,
       };
     }
 
@@ -100,6 +115,20 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
               <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getPriorityColor(task.priority)}`}>
                 {getPriorityLabel(task.priority)}
               </span>
+              {onCopy && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCopy();
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-blue-600 hover:bg-blue-50 rounded transition-all"
+                  title="Копировать задачу"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              )}
               {onDelete && (
                 <button
                   onClick={(e) => {
@@ -167,6 +196,20 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
               <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getPriorityColor(task.priority)}`}>
                 {getPriorityLabel(task.priority)}
               </span>
+              {onCopy && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCopy();
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-blue-600 hover:bg-blue-50 rounded transition-all"
+                  title="Копировать задачу"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              )}
               {canDelete && onDelete && (
                 <button
                   onClick={(e) => {
@@ -246,9 +289,25 @@ export function TaskCard({ task, onClick, onDelete, isDeveloperMode = false }: T
         >
           <div className="flex justify-between items-start mb-3">
             <h4 className="font-bold flex-1 text-base drop-shadow-sm">{task.title}</h4>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/30 backdrop-blur-sm border border-white/40">
-              {getPriorityLabel(task.priority)}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/30 backdrop-blur-sm border border-white/40">
+                {getPriorityLabel(task.priority)}
+              </span>
+              {onCopy && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCopy();
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-white hover:bg-white/20 rounded transition-all"
+                  title="Копировать задачу"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
           
           <div className="space-y-2 text-sm font-medium drop-shadow-sm">
