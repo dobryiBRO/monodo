@@ -194,15 +194,25 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
             <label className="block text-sm font-semibold text-gray-800 mb-2">
               Приоритет
             </label>
-            <select
-              value={formData.priority}
-              onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'LOW' | 'HIGH' })}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-900"
-              disabled={isSubmitting || Boolean(isCompleted && task)}
-            >
-              <option value="LOW">Низкий</option>
-              <option value="HIGH">Высокий</option>
-            </select>
+            <div className="relative">
+              <select
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'LOW' | 'HIGH' })}
+                className="w-full px-4 py-3 pr-10 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900 appearance-none bg-white shadow-sm"
+                disabled={isSubmitting || Boolean(isCompleted && task)}
+              >
+                <option value="LOW">Низкий</option>
+                <option value="HIGH">Высокий</option>
+              </select>
+              <svg
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
 
           {/* Категория */}

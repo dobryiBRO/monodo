@@ -8,6 +8,7 @@ import {
   hexToRgba,
   getContrastTextColor 
 } from '@/lib/utils';
+import { useCategories } from '@/hooks/useCategories';
 
 interface TaskCardProps {
   task: Task;
@@ -34,13 +35,16 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
     isDragging,
   } = useSortable({ id: task.id });
 
+  const { categories } = useCategories();
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const baseColor = task.category?.color || '#6B7280';
+  const fallbackColor = categories.find((c) => c.id === task.categoryId)?.color || '#6B7280';
+  const baseColor = task.category?.color || fallbackColor;
   const isWhiteText = getContrastTextColor(baseColor) === '#ffffff';
   const textPrimaryClass = isWhiteText ? 'text-white' : 'text-gray-900';
   const textSecondaryClass = isWhiteText ? 'text-white/80' : 'text-gray-700';

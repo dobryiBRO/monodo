@@ -163,17 +163,27 @@ export function TaskColumn({
         {/* Сортировка */}
         {onSortChange && (
           <div className="mt-4">
-            <select
-              value={sortBy}
-              onChange={(e) => onSortChange(e.target.value)}
-              className="w-full text-sm font-medium px-3 py-2 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800"
-            >
-              {getSortOptions().map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => onSortChange(e.target.value)}
+                className="w-full text-sm font-medium px-4 py-3 pr-10 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-800 appearance-none shadow-sm"
+              >
+                {getSortOptions().map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <svg
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
         )}
       </div>

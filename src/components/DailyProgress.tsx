@@ -49,7 +49,7 @@ export function DailyProgress() {
       <h2 className="text-xl font-bold text-gray-900 mb-6">
         Прогресс за неделю
       </h2>
-      <div className="flex justify-between items-end gap-4">
+      <div className="grid grid-cols-7 gap-4 px-4">
         {progressData.map((day, index) => {
           const isCurrentDay = isToday(day.date);
           const progress = Math.min(Math.max(day.percentage, 0), 100);
