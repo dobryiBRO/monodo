@@ -50,8 +50,8 @@ export async function PATCH(
     }
 
     // Если задача переносится из COMPLETED обратно в IN_PROGRESS, очистить endTime и completedAt
+    // НЕ сбрасываем startTime - оставляем первое фактическое время начала
     if (status === 'IN_PROGRESS' && existingTask.status === 'COMPLETED') {
-      updateData.startTime = null;
       updateData.endTime = null;
       updateData.completedAt = null;
     }

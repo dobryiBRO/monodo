@@ -166,9 +166,9 @@ export function useTasks(day?: Date) {
   const stopActiveTimer = async (): Promise<void> => {
     const activeTask = getActiveTimerTask();
     if (activeTask) {
+      // Помечаем таймер неактивным через endTime, но НЕ сбрасываем startTime
       await updateTask(activeTask.id, {
-        startTime: null as unknown as any,
-        endTime: null as unknown as any,
+        endTime: new Date(),
       });
     }
   };

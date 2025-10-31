@@ -258,31 +258,14 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
               <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Плановое время начала
               </label>
-              <div className="flex gap-2">
-                <input
-                  type="time"
-                  value={formData.scheduledStartTime}
-                  onChange={(e) => setFormData({ ...formData, scheduledStartTime: e.target.value })}
-                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
-                  disabled={isSubmitting || !canEditScheduledTime}
-                  readOnly={!canEditScheduledTime}
-                />
-                {canEditScheduledTime && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const now = new Date();
-                      const hours = now.getHours().toString().padStart(2, '0');
-                      const minutes = now.getMinutes().toString().padStart(2, '0');
-                      setFormData({ ...formData, scheduledStartTime: `${hours}:${minutes}` });
-                    }}
-                    className="px-4 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-colors font-semibold text-sm whitespace-nowrap"
-                    disabled={isSubmitting}
-                  >
-                    Сейчас
-                  </button>
-                )}
-              </div>
+              <input
+                type="time"
+                value={formData.scheduledStartTime}
+                onChange={(e) => setFormData({ ...formData, scheduledStartTime: e.target.value })}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
+                disabled={isSubmitting || !canEditScheduledTime}
+                readOnly={!canEditScheduledTime}
+              />
               {!canEditScheduledTime && (
                 <p className="text-xs text-gray-500 mt-1">
                   Плановое время нельзя изменить после запуска таймера

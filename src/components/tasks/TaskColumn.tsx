@@ -70,8 +70,8 @@ export function TaskColumn({
       return [
         ...commonOptions,
         { value: 'startTime', label: 'По времени начала' },
-        { value: 'expectedTime-asc', label: 'Время (возр.)' },
-        { value: 'expectedTime-desc', label: 'Время (убыв.)' },
+        { value: 'actualTime-asc', label: 'Время (возр.)' },
+        { value: 'actualTime-desc', label: 'Время (убыв.)' },
         { value: 'custom', label: 'Вручную' },
       ];
     }

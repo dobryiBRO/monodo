@@ -31,6 +31,8 @@ export function DailyProgress() {
 
       const completed = dayTasks.filter((t) => t.status === 'COMPLETED').length;
       const inProgress = dayTasks.filter((t) => t.status === 'IN_PROGRESS').length;
+      
+      // Для сегодняшнего дня (крайний правый) показываем актуальный процент выполненных задач
       const percentage = calculateCompletionPercentage(completed, inProgress);
       const color = getPercentageColor(percentage);
 

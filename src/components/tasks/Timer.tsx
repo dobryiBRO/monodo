@@ -99,11 +99,17 @@ export function Timer({ task, actions }: TimerProps) {
         setTimeout(() => setShowWarning(false), 3000);
       }
       
-      // Запускаем текущий таймер и сбрасываем endTime
-      await updateTask(task.id, {
-        startTime: new Date(),
+      // Запускаем текущий таймер: устанавливаем startTime только если его нет, всегда сбрасываем endTime
+      const updates: any = {
         endTime: null as unknown as any,
-      });
+      };
+      
+      // Сохраняем первое фактическое время начала
+      if (!task.startTime) {
+        updates.startTime = new Date();
+      }
+      
+      await updateTask(task.id, updates);
       await refresh();
       setIsRunning(true);
       setIsPaused(false);
@@ -122,9 +128,10 @@ export function Timer({ task, actions }: TimerProps) {
 
   const handleStop = async () => {
     try {
+      // Сохраняем actualTime и помечаем таймер как неактивный через endTime
+      // НЕ сбрасываем startTime - оно остаётся первым фактическим временем начала
       await updateTask(task.id, {
-        startTime: null as unknown as any,
-        endTime: null as unknown as any,
+        endTime: new Date(),
         actualTime: actualTimeRef.current,
       });
       await refresh();

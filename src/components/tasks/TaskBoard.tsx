@@ -277,6 +277,11 @@ export function TaskBoard() {
     });
 
     try {
+      // Если переносим из IN_PROGRESS в COMPLETED, фиксируем endTime перед сменой статуса
+      if (task.status === 'IN_PROGRESS' && newStatus === 'COMPLETED') {
+        await updateTask(taskId, { endTime: new Date() });
+      }
+      
       await updateTaskStatus(taskId, newStatus);
       // Явно обновляем список задач после изменения статуса
       await new Promise(resolve => setTimeout(resolve, 100)); // Небольшая задержка для завершения обновления

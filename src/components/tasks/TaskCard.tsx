@@ -10,7 +10,6 @@ import {
   getContrastTextColorOnMixed,
   isNearWhite 
 } from '@/lib/utils';
-import { useCategories } from '@/hooks/useCategories';
 
 interface TaskCardProps {
   task: Task;
@@ -37,16 +36,14 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
     isDragging,
   } = useSortable({ id: task.id });
 
-  const { categories } = useCategories();
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const fallbackColor = categories.find((c) => c.id === task.categoryId)?.color || '#6B7280';
-  const baseColor = task.category?.color || fallbackColor;
+  // Используем цвет категории напрямую из task.category (возвращается с сервера)
+  const baseColor = task.category?.color || '#6B7280';
   const backgroundAlpha = 0.18; // слегка менее прозрачный, чем было (0.14)
   const isWhiteText = getContrastTextColorOnMixed(baseColor, backgroundAlpha) === '#ffffff';
   const textPrimaryClass = isWhiteText ? 'text-white' : 'text-gray-900';
@@ -271,12 +268,18 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
               const displayTime = getDisplayTime();
               if (!displayTime) return null;
               
+              if (displayTime.isOverdue) {
+                return (
+                  <div className="inline-flex items-center">
+                    <span className="px-2 py-0.5 rounded-full bg-red-600 text-white text-xs font-semibold shadow-sm">
+                      {displayTime.label}: {displayTime.time}
+                    </span>
+                  </div>
+                );
+              }
+              
               return (
-                <div className={`text-xs font-semibold ${
-                  displayTime.isOverdue 
-                    ? 'text-red-600 [text-shadow:_0_0_2px_rgb(0_0_0_/_100%)]' 
-                    : textSecondaryClass
-                }`}>
+                <div className={`text-xs font-semibold ${textSecondaryClass}`}>
                   {displayTime.label}: {displayTime.time}
                 </div>
               );
