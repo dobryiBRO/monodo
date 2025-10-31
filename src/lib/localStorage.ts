@@ -38,7 +38,9 @@ export function getLocalTasks(): Task[] {
     if (!data) return [];
     
     const tasks = JSON.parse(data);
-    // Преобразование строк дат обратно в объекты Date
+    const categories = getLocalCategories();
+    
+    // Преобразование строк дат обратно в объекты Date и присоединение категорий
     return tasks.map((task: any) => ({
       ...task,
       createdAt: new Date(task.createdAt),
@@ -46,7 +48,9 @@ export function getLocalTasks(): Task[] {
       completedAt: task.completedAt ? new Date(task.completedAt) : undefined,
       startTime: task.startTime ? new Date(task.startTime) : undefined,
       endTime: task.endTime ? new Date(task.endTime) : undefined,
+      scheduledStartTime: task.scheduledStartTime ? new Date(task.scheduledStartTime) : undefined,
       day: new Date(task.day),
+      category: task.categoryId ? categories.find((c) => c.id === task.categoryId) : undefined,
     }));
   } catch (error) {
     console.error('Error getting local tasks:', error);
@@ -63,11 +67,13 @@ export function saveLocalTask(task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>
   }
 
   const tasks = getLocalTasks();
+  const categories = getLocalCategories();
   const newTask: Task = {
     ...task,
     id: generateTempId(),
     createdAt: new Date(),
     updatedAt: new Date(),
+    category: task.categoryId ? categories.find((c) => c.id === task.categoryId) : undefined,
   };
 
   tasks.push(newTask);
@@ -88,6 +94,7 @@ export function updateLocalTask(id: string, updates: Partial<Task>): Task | null
   }
 
   const tasks = getLocalTasks();
+  const categories = getLocalCategories();
   const index = tasks.findIndex(t => t.id === id);
   
   if (index === -1) return null;
@@ -97,6 +104,11 @@ export function updateLocalTask(id: string, updates: Partial<Task>): Task | null
     ...updates,
     updatedAt: new Date(),
   };
+  
+  // Присоединяем категорию если есть categoryId
+  if (updatedTask.categoryId) {
+    updatedTask.category = categories.find((c) => c.id === updatedTask.categoryId);
+  }
 
   tasks[index] = updatedTask;
   localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
