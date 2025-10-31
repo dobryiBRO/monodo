@@ -23,7 +23,7 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
     expectedTime: 0, // в минутах для UI
     actualTime: 0, // в минутах для UI
     categoryId: undefined as string | undefined,
-    startTime: '',
+    scheduledStartTime: '', // Плановое время начала
     endTime: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,7 +52,7 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
         expectedTime: task.expectedTime ? secondsToMinutes(task.expectedTime) : 0,
         actualTime: task.actualTime ? secondsToMinutes(task.actualTime) : 0,
         categoryId: task.categoryId,
-        startTime: task.startTime ? format(new Date(task.startTime), 'HH:mm') : '',
+        scheduledStartTime: task.scheduledStartTime ? format(new Date(task.scheduledStartTime), 'HH:mm') : '',
         endTime: task.endTime ? format(new Date(task.endTime), 'HH:mm') : '',
       });
     } else {
@@ -64,7 +64,7 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
         expectedTime: 0,
         actualTime: 0,
         categoryId: undefined,
-        startTime: '',
+        scheduledStartTime: '',
         endTime: '',
       });
     }
@@ -88,6 +88,16 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
         return base;
       };
 
+      // Валидация: нельзя ставить прошлое время для неначавшихся задач
+      if (formData.scheduledStartTime && !task?.startTime) {
+        const scheduledTime = buildDateFromTime(formData.scheduledStartTime);
+        if (scheduledTime && scheduledTime < new Date()) {
+          setErrorMessage('Нельзя установить прошлое время для неначавшихся задач');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const taskData: Partial<Task> = {
         title: formData.title,
         description: formData.description || undefined,
@@ -96,7 +106,7 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
         actualTime: minutesToSeconds(formData.actualTime),
         categoryId: formData.categoryId,
         status: task ? task.status : status,
-        startTime: buildDateFromTime(formData.startTime, task?.startTime ? new Date(task.startTime) : undefined),
+        scheduledStartTime: buildDateFromTime(formData.scheduledStartTime, task?.scheduledStartTime ? new Date(task.scheduledStartTime) : undefined),
         endTime: buildDateFromTime(formData.endTime, task?.endTime ? new Date(task.endTime) : undefined),
       };
 
@@ -121,12 +131,12 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
   const isInProgress = (!task && status === 'IN_PROGRESS') || (task && task.status === 'IN_PROGRESS');
   const isCompleted = (!task && status === 'COMPLETED') || (task && task.status === 'COMPLETED');
   
-  // Проверяем, запущен ли таймер у задачи
+  // Проверяем, запущен ли таймер у задачи (startTime установлен И endTime нет)
   const hasActiveTimer = task && task.startTime && !task.endTime;
 
   // Определяем, можно ли редактировать поля
   const canEditExpectedTime = isBacklog || (isInProgress && !hasActiveTimer);
-  const canEditStartTime = isInProgress && !hasActiveTimer;
+  const canEditScheduledTime = (isInProgress || isBacklog) && !hasActiveTimer;
 
   return (
     <div 
@@ -242,29 +252,29 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
             </div>
           )}
 
-          {/* Время начала (для IN_PROGRESS) */}
-          {isInProgress && (
+          {/* Плановое время начала (для BACKLOG и IN_PROGRESS) */}
+          {(isBacklog || isInProgress) && (
           <div>
               <label className="block text-sm font-semibold text-gray-800 mb-2">
-                Время начала
+                Плановое время начала
               </label>
               <div className="flex gap-2">
                 <input
                   type="time"
-                  value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  value={formData.scheduledStartTime}
+                  onChange={(e) => setFormData({ ...formData, scheduledStartTime: e.target.value })}
                   className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
-                  disabled={isSubmitting || !canEditStartTime}
-                  readOnly={!canEditStartTime}
+                  disabled={isSubmitting || !canEditScheduledTime}
+                  readOnly={!canEditScheduledTime}
                 />
-                {canEditStartTime && (
+                {canEditScheduledTime && (
                   <button
                     type="button"
                     onClick={() => {
                       const now = new Date();
                       const hours = now.getHours().toString().padStart(2, '0');
                       const minutes = now.getMinutes().toString().padStart(2, '0');
-                      setFormData({ ...formData, startTime: `${hours}:${minutes}` });
+                      setFormData({ ...formData, scheduledStartTime: `${hours}:${minutes}` });
                     }}
                     className="px-4 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-colors font-semibold text-sm whitespace-nowrap"
                     disabled={isSubmitting}
@@ -273,11 +283,14 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
                   </button>
                 )}
               </div>
-              {!canEditStartTime && (
+              {!canEditScheduledTime && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Время начала устанавливается автоматически при запуске таймера
+                  Плановое время нельзя изменить после запуска таймера
                 </p>
               )}
+              <p className="text-xs text-gray-600 mt-1 italic">
+                Информационное поле для планирования. Таймер запускается вручную.
+              </p>
             </div>
           )}
 

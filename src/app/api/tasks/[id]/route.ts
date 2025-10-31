@@ -64,6 +64,7 @@ export async function PUT(
       actualTime,
       categoryId,
       day,
+      scheduledStartTime,
       startTime,
       endTime,
       completedAt,
@@ -111,6 +112,9 @@ export async function PUT(
         ...(actualTime !== undefined && { actualTime }),
         ...(categoryId !== undefined && { categoryId }),
         ...(day !== undefined && { day: new Date(day) }),
+        ...(scheduledStartTime !== undefined && { 
+          scheduledStartTime: scheduledStartTime ? new Date(scheduledStartTime) : null 
+        }),
         ...(startTime !== undefined && { 
           startTime: startTime ? new Date(startTime) : null 
         }),

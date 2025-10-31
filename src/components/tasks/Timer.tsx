@@ -22,25 +22,12 @@ export function Timer({ task, actions }: TimerProps) {
   const [isPaused, setIsPaused] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const actualTimeRef = useRef(task.actualTime); // Ref для отслеживания актуального времени
+  const actualTimeRef = useRef(task.actualTime);
   
-  // ИСПРАВЛЕНИЕ: Определяем режим таймера ОДИН РАЗ при монтировании, чтобы он не менялся
+  // Определяем режим таймера ОДИН РАЗ при монтировании
   const isTimerRef = useRef<boolean>(
     Boolean((task.expectedTime && task.expectedTime > 0) && task.actualTime === 0)
   );
-
-  // ДИАГНОСТИКА: Логируем все важные параметры
-  console.log('🔍 Timer Debug:', {
-    taskId: task.id.substring(0, 8),
-    expectedTime: task.expectedTime,
-    actualTime: task.actualTime,
-    isTimer: isTimerRef.current,
-    startTime: task.startTime,
-    endTime: task.endTime,
-    status: task.status,
-    isRunning,
-    isPaused,
-  });
 
   // Синхронизируем ref с prop
   useEffect(() => {
@@ -49,69 +36,45 @@ export function Timer({ task, actions }: TimerProps) {
 
   // Вычисляем начальное время ТОЛЬКО при изменении ключевых полей
   useEffect(() => {
-    console.log('📊 useEffect [INIT] сработал', { 
-      isTimer: isTimerRef.current, 
-      expectedTime: task.expectedTime, 
-      actualTime: task.actualTime 
-    });
-    
     if (isTimerRef.current) {
-      // Таймер: ожидаемое время минус фактическое
       setTime((task.expectedTime || 0) - task.actualTime);
     } else {
-      // Секундомер: фактическое время
       setTime(task.actualTime);
     }
 
-    // Проверяем, запущен ли таймер (только если IN_PROGRESS и корректные поля)
+    // Проверяем, запущен ли таймер (только если IN_PROGRESS, startTime установлен и endTime нет)
     if (task.status === 'IN_PROGRESS' && task.startTime && !task.endTime) {
-      console.log('✅ Устанавливаем isRunning = true');
       setIsRunning(true);
       setIsPaused(false);
     } else {
-      console.log('❌ Устанавливаем isRunning = false', { 
-        status: task.status, 
-        hasStartTime: !!task.startTime, 
-        hasEndTime: !!task.endTime 
-      });
       setIsRunning(false);
       setIsPaused(false);
     }
-  // ИСПРАВЛЕНИЕ: Убрали actualTime из зависимостей, чтобы не перезапускать при каждой секунде
   }, [task.id, task.status, task.expectedTime, task.startTime, task.endTime]);
 
   // Управление таймером/секундомером
   useEffect(() => {
-    console.log('⏱️ useEffect [INTERVAL] сработал', { isRunning, isPaused, isTimer: isTimerRef.current });
-    
     if (isRunning && !isPaused) {
-      console.log('🟢 Запускаем интервал');
       intervalRef.current = setInterval(() => {
         setTime((prevTime) => {
           if (isTimerRef.current) {
-            // Таймер: обратный отсчет
             const newTime = prevTime - 1;
             if (newTime <= 0) {
-              // Время вышло, переключаемся на секундомер (показываем +)
               return -1;
             }
             return newTime;
           } else {
-            // Секундомер: прямой отсчет
             return prevTime + 1;
           }
         });
 
-        // Обновляем actualTime в БД каждую секунду, используя ref для актуального значения
         actualTimeRef.current += 1;
-        console.log('⏲️ Обновляем actualTime:', actualTimeRef.current);
         updateTask(task.id, {
           actualTime: actualTimeRef.current,
         }).catch(console.error);
       }, 1000);
     } else {
       if (intervalRef.current) {
-        console.log('🔴 Останавливаем интервал');
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
@@ -119,40 +82,29 @@ export function Timer({ task, actions }: TimerProps) {
 
     return () => {
       if (intervalRef.current) {
-        console.log('🧹 Cleanup: останавливаем интервал');
         clearInterval(intervalRef.current);
       }
     };
-  // ИСПРАВЛЕНИЕ: Убрали isTimer из зависимостей, используем ref
   }, [isRunning, isPaused, task.id, updateTask]);
 
   const handleStart = async () => {
     try {
-      console.log('🚀 handleStart вызван');
-      
       // Проверяем, есть ли другой активный таймер
       const activeTimer = getActiveTimerTask();
       if (activeTimer && activeTimer.id !== task.id) {
-        // Останавливаем предыдущий таймер (полное отключение)
         await stopActiveTimer();
-        // Обновляем список задач, чтобы предыдущий таймер точно остановился
         await refresh();
-        // Небольшая пауза для синхронизации
         await new Promise(resolve => setTimeout(resolve, 100));
-        // Показываем предупреждение на 3 секунды
         setShowWarning(true);
         setTimeout(() => setShowWarning(false), 3000);
       }
       
-      // Запускаем текущий таймер (серверный предохранитель отключит другие)
-      console.log('📝 Обновляем startTime в БД и сбрасываем endTime');
+      // Запускаем текущий таймер и сбрасываем endTime
       await updateTask(task.id, {
         startTime: new Date(),
-        endTime: null as unknown as any, // Сбрасываем endTime если задача вернулась из COMPLETED
+        endTime: null as unknown as any,
       });
-      // Обновляем список, чтобы карточки упорядочились
       await refresh();
-      console.log('✅ Устанавливаем isRunning = true локально');
       setIsRunning(true);
       setIsPaused(false);
     } catch (error) {
@@ -175,7 +127,7 @@ export function Timer({ task, actions }: TimerProps) {
         endTime: null as unknown as any,
         actualTime: actualTimeRef.current,
       });
-      await refresh(); // Обновляем список, чтобы карточка упала вниз
+      await refresh();
       setIsRunning(false);
       setIsPaused(false);
     } catch (error) {
@@ -185,16 +137,12 @@ export function Timer({ task, actions }: TimerProps) {
 
   const handleComplete = async () => {
     try {
-      // Сначала сохраняем актуальное время и устанавливаем endTime
       await updateTask(task.id, {
         actualTime: actualTimeRef.current,
         endTime: new Date(),
       });
 
-      // Затем меняем статус на COMPLETED
       await updateTaskStatus(task.id, 'COMPLETED');
-
-      // Обновляем список задач
       await refresh();
 
       setIsRunning(false);
@@ -207,13 +155,10 @@ export function Timer({ task, actions }: TimerProps) {
   // Отображение времени
   const displayTime = () => {
     if (isTimerRef.current && time > 0) {
-      // Таймер с обратным отсчетом
       return formatTime(time);
     } else if (time < 0) {
-      // Просрочка (со знаком +)
       return `+${formatTime(Math.abs(time))}`;
     } else {
-      // Секундомер
       return formatTime(time);
     }
   };
@@ -247,7 +192,6 @@ export function Timer({ task, actions }: TimerProps) {
   // Таймер запущен
   return (
     <div className="space-y-2">
-      {/* Предупреждение о переключении таймера */}
       {showWarning && (
         <div className="text-xs text-orange-600 font-medium bg-orange-50 border border-orange-200 rounded px-2 py-1 animate-pulse">
           ⚠️ Предыдущий таймер остановлен
@@ -296,7 +240,6 @@ export function Timer({ task, actions }: TimerProps) {
         </button>
       </div>
 
-      {/* Визуальный индикатор просрочки */}
       {isTimerRef.current && time <= 0 && (
         <div className="text-xs text-red-600 font-medium animate-pulse">
           ⚠️ Время истекло!

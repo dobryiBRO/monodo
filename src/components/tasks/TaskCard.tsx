@@ -77,14 +77,35 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
     } as React.CSSProperties;
   };
 
-  // Проверка просрочки времени начала
-  const isStartTimeOverdue = () => {
-    if (task.status === 'IN_PROGRESS' && task.startTime && !task.endTime) {
+  // Проверка просрочки ПЛАНОВОГО времени начала (только если таймер еще не запущен)
+  const isScheduledTimeOverdue = () => {
+    if (task.status === 'IN_PROGRESS' && task.scheduledStartTime && !task.startTime) {
       const now = new Date();
-      const start = new Date(task.startTime);
-      return now < start;
+      const scheduled = new Date(task.scheduledStartTime);
+      return now > scheduled;
     }
     return false;
+  };
+  
+  // Определяем какое время показывать
+  const getDisplayTime = () => {
+    // Если таймер запущен (startTime есть) - показываем фактическое
+    if (task.startTime) {
+      return {
+        label: 'Начало',
+        time: new Date(task.startTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+        isOverdue: false,
+      };
+    }
+    // Если таймер не запущен, но есть плановое - показываем плановое
+    if (task.scheduledStartTime) {
+      return {
+        label: 'План',
+        time: new Date(task.scheduledStartTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+        isOverdue: isScheduledTimeOverdue(),
+      };
+    }
+    return null;
   };
 
   // ВАРИАНТ 1: BACKLOG
@@ -246,11 +267,20 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
               </div>
             )}
             
-            {task.startTime && (
-              <div className={`text-xs font-semibold ${isStartTimeOverdue() ? 'text-red-600' : textSecondaryClass}`}>
-                Начало: {new Date(task.startTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            )}
+            {(() => {
+              const displayTime = getDisplayTime();
+              if (!displayTime) return null;
+              
+              return (
+                <div className={`text-xs font-semibold ${
+                  displayTime.isOverdue 
+                    ? 'text-red-600 [text-shadow:_0_0_2px_rgb(0_0_0_/_100%)]' 
+                    : textSecondaryClass
+                }`}>
+                  {displayTime.label}: {displayTime.time}
+                </div>
+              );
+            })()}
             
             {/* Таймер/Секундомер */}
             <div onClick={(e) => e.stopPropagation()}>

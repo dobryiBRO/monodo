@@ -102,7 +102,8 @@ model Task {
   actualTime      Int        @default(0) // in seconds
   
   // Временные метки
-  startTime       DateTime?  // Фактическое время начала работы над задачей
+  scheduledStartTime DateTime?  // Плановое время начала (устанавливается пользователем)
+  startTime       DateTime?  // Фактическое время начала работы таймера
   endTime         DateTime?  // Время завершения задачи
   
   // Дата, к которой относится задача

@@ -10,7 +10,8 @@ export interface Task {
   actualTime: number; // in seconds (default 0)
   
   // Временные метки
-  startTime?: Date; // Фактическое время начала работы
+  scheduledStartTime?: Date; // Плановое время начала
+  startTime?: Date; // Фактическое время начала работы таймера
   endTime?: Date; // Время завершения
   
   userId: string;
