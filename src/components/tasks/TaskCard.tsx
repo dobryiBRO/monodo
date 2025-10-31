@@ -5,11 +5,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { Task } from '@/types/task';
 import { Timer } from './Timer';
 import { 
-  createCompletedGradient, 
-  createBacklogGradient, 
-  createInProgressGradient, 
-  createCategoryGradient, 
-  hexToRgba 
+  hexToRgba,
+  getContrastTextColor 
 } from '@/lib/utils';
 
 interface TaskCardProps {
@@ -18,9 +15,16 @@ interface TaskCardProps {
   onDelete?: () => void;
   onCopy?: () => void;
   isDeveloperMode?: boolean;
+  taskActions?: {
+    updateTask: (id: string, updates: Partial<Task>) => Promise<Task> | Promise<any>;
+    updateTaskStatus: (id: string, status: Task['status']) => Promise<Task> | Promise<any>;
+    getActiveTimerTask: () => Task | null;
+    stopActiveTimer: () => Promise<void>;
+    refresh: () => Promise<void> | void;
+  };
 }
 
-export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = false }: TaskCardProps) {
+export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = false, taskActions }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -35,6 +39,11 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  const baseColor = task.category?.color || '#6B7280';
+  const isWhiteText = getContrastTextColor(baseColor) === '#ffffff';
+  const textPrimaryClass = isWhiteText ? 'text-white' : 'text-gray-900';
+  const textSecondaryClass = isWhiteText ? 'text-white/80' : 'text-gray-700';
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -51,35 +60,13 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
     return priority === 'HIGH' ? 'Высокий' : 'Низкий';
   };
 
-  // Определяем стиль фона карточки
+  // Определяем стиль фона карточки (однотонный от цвета категории)
   const getCardStyle = () => {
-    const baseColor = task.category?.color || '#6B7280'; // fallback на серый
-    
-    if (task.status === 'COMPLETED') {
-      return {
-        background: createCompletedGradient(baseColor),
-        borderColor: hexToRgba(baseColor, 0.4),
-        boxShadow: `0 12px 30px ${hexToRgba(baseColor, 0.25)}`,
-      };
-    }
-
-    if (task.status === 'IN_PROGRESS') {
-      return {
-        background: createInProgressGradient(baseColor),
-        borderColor: hexToRgba(baseColor, 0.4),
-        boxShadow: `0 10px 24px ${hexToRgba(baseColor, 0.2)}`,
-      };
-    }
-
-    if (task.status === 'BACKLOG') {
-      return {
-        background: createBacklogGradient(baseColor),
-        borderColor: hexToRgba(baseColor, 0.4),
-        boxShadow: `0 8px 20px ${hexToRgba(baseColor, 0.15)}`,
-      };
-    }
-
-    return {};
+    return {
+      backgroundColor: hexToRgba(baseColor, 0.14),
+      borderColor: hexToRgba(baseColor, 0.25),
+      boxShadow: `0 10px 24px ${hexToRgba(baseColor, 0.16)}`,
+    } as React.CSSProperties;
   };
 
   // Проверка просрочки времени начала
@@ -110,7 +97,7 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
           className="cursor-pointer"
         >
           <div className="flex justify-between items-start mb-3">
-            <h4 className="font-semibold text-gray-900 flex-1 text-base">{task.title}</h4>
+            <h4 className={`font-semibold flex-1 text-base ${textPrimaryClass}`}>{task.title}</h4>
             <div className="flex items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getPriorityColor(task.priority)}`}>
                 {getPriorityLabel(task.priority)}
@@ -147,21 +134,21 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
           </div>
           
           {task.description && (
-            <p className="text-sm text-gray-700 mb-3 line-clamp-2 font-medium">{task.description}</p>
+            <p className={`text-sm mb-3 line-clamp-2 font-medium ${textSecondaryClass}`}>{task.description}</p>
           )}
           
-          <div className="flex items-center justify-between text-sm font-medium">
+          <div className={`flex items-center justify-between text-sm font-medium ${textSecondaryClass}`}>
             {task.category && (
               <div className="flex items-center gap-2">
                 <div
                   className="w-3 h-3 rounded-md"
                   style={{ backgroundColor: task.category.color }}
                 />
-                <span className="text-gray-800 font-semibold">{task.category.name}</span>
+                <span className={`font-semibold ${textPrimaryClass}`}>{task.category.name}</span>
               </div>
             )}
             {task.expectedTime && (
-              <span className="text-gray-600 font-semibold">
+              <span>
                 ~{Math.round(task.expectedTime / 60)} мин
               </span>
             )}
@@ -191,7 +178,7 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
           className="cursor-pointer"
         >
           <div className="flex justify-between items-start mb-3">
-            <h4 className="font-semibold text-gray-900 flex-1 text-base">{task.title}</h4>
+            <h4 className={`font-semibold flex-1 text-base ${textPrimaryClass}`}>{task.title}</h4>
             <div className="flex items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getPriorityColor(task.priority)}`}>
                 {getPriorityLabel(task.priority)}
@@ -242,24 +229,24 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
           
           <div className="space-y-3">
             {task.category && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className={`flex items-center gap-2 text-sm ${textSecondaryClass}`}>
                 <div
                   className="w-3 h-3 rounded-md"
                   style={{ backgroundColor: task.category.color }}
                 />
-                <span className="text-gray-800 font-semibold">{task.category.name}</span>
+                <span className={`font-semibold ${textPrimaryClass}`}>{task.category.name}</span>
               </div>
             )}
             
             {task.startTime && (
-              <div className={`text-xs font-semibold ${isStartTimeOverdue() ? 'text-red-600' : 'text-gray-600'}`}>
+              <div className={`text-xs font-semibold ${isStartTimeOverdue() ? 'text-red-600' : textSecondaryClass}`}>
                 Начало: {new Date(task.startTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
               </div>
             )}
             
             {/* Таймер/Секундомер */}
             <div onClick={(e) => e.stopPropagation()}>
-              <Timer task={task} />
+              <Timer task={task} actions={taskActions!} />
             </div>
           </div>
         </div>
@@ -275,22 +262,19 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
         style={{ ...style, ...getCardStyle() }}
         {...attributes}
         {...listeners}
-        className="border-2 rounded-2xl p-5 hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative overflow-hidden"
+        className="border-2 rounded-2xl p-5 hover:shadow-xl transition-all cursor-grab active:cursor-grabbing relative"
       >
-        {/* Полупрозрачный overlay для лучшей читаемости текста */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/30 to-black/20 pointer-events-none" />
-        
         <div
           onClick={(e) => {
             e.stopPropagation();
             onClick();
           }}
-          className="cursor-pointer relative z-10 text-white"
+          className={`cursor-pointer ${textPrimaryClass}`}
         >
           <div className="flex justify-between items-start mb-3">
-            <h4 className="font-bold flex-1 text-base drop-shadow-sm">{task.title}</h4>
+            <h4 className={`font-bold flex-1 text-base`}>{task.title}</h4>
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/30 backdrop-blur-sm border border-white/40">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/70 text-gray-900 border border-white/80">
                 {getPriorityLabel(task.priority)}
               </span>
               {onCopy && (
@@ -299,7 +283,7 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
                     e.stopPropagation();
                     onCopy();
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-white hover:bg-white/20 rounded transition-all"
+                  className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${isWhiteText ? 'text-white hover:bg-white/20' : 'text-blue-600 hover:bg-blue-50'}`}
                   title="Копировать задачу"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,29 +294,29 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
             </div>
           </div>
           
-          <div className="space-y-2 text-sm font-medium drop-shadow-sm">
+          <div className={`space-y-2 text-sm font-medium`}>
             {task.category && (
-              <div className="flex items-center gap-2">
+              <div className={`flex items-center gap-2 ${textSecondaryClass}`}>
                 <div
-                  className="w-3 h-3 rounded-md border-2 border-white shadow-sm"
+                  className={`w-3 h-3 rounded-md ${isWhiteText ? 'border-2 border-white' : ''}`}
                   style={{ backgroundColor: task.category.color }}
                 />
-                <span className="font-semibold">{task.category.name}</span>
+                <span className={`font-semibold ${textPrimaryClass}`}>{task.category.name}</span>
               </div>
             )}
             
             {task.endTime && (
-              <div className="text-xs font-bold">
+              <div className={`text-xs font-bold ${textSecondaryClass}`}>
                 Завершено: {new Date(task.endTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
               </div>
             )}
             
             <div className="flex items-center justify-between pt-1">
-              <span className="text-xs font-bold">
+              <span className={`text-xs font-bold ${textPrimaryClass}`}>
                 Время: {Math.round(task.actualTime / 60)} мин
               </span>
               {task.expectedTime && (
-                <span className="text-xs font-bold">
+                <span className={`text-xs font-bold ${textSecondaryClass}`}>
                   План/Факт: {Math.round((task.expectedTime / (task.actualTime || 1)) * 100)}%
                 </span>
               )}

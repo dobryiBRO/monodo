@@ -3,14 +3,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { Task } from '@/types/task';
 import { formatTime } from '@/lib/utils';
-import { useTasks } from '@/hooks/useTasks';
 
 interface TimerProps {
   task: Task;
+  actions: {
+    updateTask: (id: string, updates: Partial<Task>) => Promise<Task> | Promise<any>;
+    updateTaskStatus: (id: string, status: Task['status']) => Promise<Task> | Promise<any>;
+    getActiveTimerTask: () => Task | null;
+    stopActiveTimer: () => Promise<void>;
+    refresh: () => Promise<void> | void;
+  };
 }
 
-export function Timer({ task }: TimerProps) {
-  const { updateTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer, refresh } = useTasks();
+export function Timer({ task, actions }: TimerProps) {
+  const { updateTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer, refresh } = actions;
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -170,13 +176,12 @@ export function Timer({ task }: TimerProps) {
   };
 
   const getTimeColor = () => {
-    if (isTimer && time <= 0) {
-      return 'text-red-600'; // Просрочка
+    if (isTimer) {
+      if (time < 0) return 'text-red-600';
+      if (time <= 60) return 'text-yellow-600';
+      return 'text-gray-800';
     }
-    if (isTimer && time <= 300) {
-      return 'text-orange-600'; // Осталось меньше 5 минут
-    }
-    return 'text-gray-900';
+    return 'text-gray-800';
   };
 
   // Если таймер не запущен

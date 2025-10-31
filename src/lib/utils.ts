@@ -212,6 +212,39 @@ export function getPercentageColor(percentage: number): string {
 }
 
 /**
+ * Возвращает контрастный цвет текста (#ffffff или #111827) для заданного HEX-фона
+ * Выбор делается по наибольшему контрасту по формуле WCAG.
+ */
+export function getContrastTextColor(hexBackground: string): '#ffffff' | '#111827' {
+  const normalized = hexBackground.replace('#', '').length === 3
+    ? hexBackground
+        .replace('#', '')
+        .split('')
+        .map((c) => c + c)
+        .join('')
+    : hexBackground.replace('#', '');
+
+  const int = parseInt(normalized, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+
+  const srgbToLinear = (c: number) => {
+    const cs = c / 255;
+    return cs <= 0.03928 ? cs / 12.92 : Math.pow((cs + 0.055) / 1.055, 2.4);
+  };
+
+  const l = 0.2126 * srgbToLinear(r) + 0.7152 * srgbToLinear(g) + 0.0722 * srgbToLinear(b);
+  const luminanceWhite = 1;
+  const luminanceDark = 0.035; // приблизительная яркость #111827
+
+  const contrastWithWhite = (luminanceWhite + 0.05) / (l + 0.05);
+  const contrastWithDark = (l + 0.05) / (luminanceDark + 0.05);
+
+  return contrastWithWhite >= contrastWithDark ? '#ffffff' : '#111827';
+}
+
+/**
  * Расчет процента план/факт
  * Формула: (ожидаемое / фактическое) * 100
  */

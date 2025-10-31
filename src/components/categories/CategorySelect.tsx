@@ -145,7 +145,7 @@ export function CategorySelect({
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 placeholder="Название категории"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 placeholder:text-gray-400 font-medium"
                 autoFocus
                 onKeyPress={(e) => e.key === 'Enter' && handleCreateCategory()}
               />

@@ -20,7 +20,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { arrayMove } from '@dnd-kit/sortable';
 
 export function TaskBoard() {
-  const { tasks, isLoading, error, createTask, updateTask, deleteTask, updateTaskStatus } = useTasks();
+  const { tasks, isLoading, error, createTask, updateTask, deleteTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer, refresh } = useTasks();
   const { isDeveloperMode } = useDeveloperMode();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [sortOptions, setSortOptions] = useState({
@@ -369,56 +369,64 @@ export function TaskBoard() {
         <TaskColumn
           title="Задачи"
           status="BACKLOG"
-          description="Запланированные задачи"
+          description="Задачи, которые предстоит сделать"
           tasks={categorizedTasks.BACKLOG}
           onTaskSave={handleTaskSave}
           onTaskDelete={handleTaskDelete}
           isDeveloperMode={isDeveloperMode}
           sortBy={sortOptions.BACKLOG}
-          onSortChange={(sortBy) => handleSortChange('BACKLOG', sortBy)}
+          onSortChange={(v) => setSortOptions((s) => ({ ...s, BACKLOG: v }))}
+          taskActions={{ updateTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer, refresh }}
         />
         <TaskColumn
           title="В процессе"
           status="IN_PROGRESS"
-          description="Активные задачи"
+          description="Текущая работа"
           tasks={categorizedTasks.IN_PROGRESS}
           onTaskSave={handleTaskSave}
           onTaskDelete={handleTaskDelete}
           isDeveloperMode={isDeveloperMode}
           sortBy={sortOptions.IN_PROGRESS}
-          onSortChange={(sortBy) => handleSortChange('IN_PROGRESS', sortBy)}
+          onSortChange={(v) => setSortOptions((s) => ({ ...s, IN_PROGRESS: v }))}
+          taskActions={{ updateTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer, refresh }}
         />
         <TaskColumn
           title="Выполненные"
           status="COMPLETED"
-          description="Завершенные задачи"
+          description="Завершённые задачи"
           tasks={categorizedTasks.COMPLETED}
           onTaskSave={handleTaskSave}
           onTaskDelete={handleTaskDelete}
           isDeveloperMode={isDeveloperMode}
           sortBy={sortOptions.COMPLETED}
-          onSortChange={(sortBy) => handleSortChange('COMPLETED', sortBy)}
+          onSortChange={(v) => setSortOptions((s) => ({ ...s, COMPLETED: v }))}
+          taskActions={{ updateTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer, refresh }}
         />
       </div>
 
       {/* Drag Overlay */}
       <DragOverlay>
         {activeTask ? (
-          <div className="opacity-80 rotate-3 transform scale-105">
-            <TaskCard task={activeTask} onClick={() => {}} />
-          </div>
+          <TaskCard
+            task={activeTask}
+            onClick={() => {}}
+            isDeveloperMode={isDeveloperMode}
+            taskActions={{ updateTask, updateTaskStatus, getActiveTimerTask, stopActiveTimer, refresh }}
+          />
         ) : null}
       </DragOverlay>
 
-      <ConfirmModal
-        isOpen={infoModal !== null}
-        title={infoModal?.title || ''}
-        description={infoModal?.description}
-        confirmText="Понятно"
-        showCancel={false}
-        onConfirm={() => setInfoModal(null)}
-        onClose={() => setInfoModal(null)}
-      />
+      {infoModal && (
+        <ConfirmModal
+          isOpen={true}
+          title={infoModal.title}
+          description={infoModal.description}
+          confirmText="Понятно"
+          showCancel={false}
+          onConfirm={() => setInfoModal(null)}
+          onClose={() => setInfoModal(null)}
+        />
+      )}
     </DndContext>
   );
 }

@@ -18,6 +18,13 @@ interface TaskColumnProps {
   isDeveloperMode?: boolean;
   sortBy?: string;
   onSortChange?: (sortBy: string) => void;
+  taskActions?: {
+    updateTask: (id: string, updates: Partial<Task>) => Promise<Task> | Promise<any>;
+    updateTaskStatus: (id: string, status: Task['status']) => Promise<Task> | Promise<any>;
+    getActiveTimerTask: () => Task | null;
+    stopActiveTimer: () => Promise<void>;
+    refresh: () => Promise<void> | void;
+  };
 }
 
 type SortOption = {
@@ -35,6 +42,7 @@ export function TaskColumn({
   isDeveloperMode = false,
   sortBy = 'default',
   onSortChange,
+  taskActions,
 }: TaskColumnProps) {
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -207,6 +215,7 @@ export function TaskColumn({
                     : undefined
                 }
                 isDeveloperMode={isDeveloperMode}
+                taskActions={taskActions}
               />
             ))
           )}
