@@ -145,9 +145,10 @@ export function Timer({ task, actions }: TimerProps) {
       }
       
       // Запускаем текущий таймер (серверный предохранитель отключит другие)
-      console.log('📝 Обновляем startTime в БД');
+      console.log('📝 Обновляем startTime в БД и сбрасываем endTime');
       await updateTask(task.id, {
         startTime: new Date(),
+        endTime: null as unknown as any, // Сбрасываем endTime если задача вернулась из COMPLETED
       });
       // Обновляем список, чтобы карточки упорядочились
       await refresh();
