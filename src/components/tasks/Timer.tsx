@@ -29,6 +29,21 @@ export function Timer({ task, actions }: TimerProps) {
   const hasStartedBefore = task.actualTime > 0;
   const isTimer = hasExpectedTime && !hasStartedBefore;
 
+  // ДИАГНОСТИКА: Логируем все важные параметры
+  console.log('🔍 Timer Debug:', {
+    taskId: task.id.substring(0, 8),
+    expectedTime: task.expectedTime,
+    actualTime: task.actualTime,
+    hasExpectedTime,
+    hasStartedBefore,
+    isTimer,
+    startTime: task.startTime,
+    endTime: task.endTime,
+    status: task.status,
+    isRunning,
+    isPaused,
+  });
+
   // Синхронизируем ref с prop
   useEffect(() => {
     actualTimeRef.current = task.actualTime;
@@ -36,6 +51,8 @@ export function Timer({ task, actions }: TimerProps) {
 
   // Вычисляем начальное время
   useEffect(() => {
+    console.log('📊 useEffect [INIT] сработал', { isTimer, expectedTime: task.expectedTime, actualTime: task.actualTime });
+    
     if (isTimer) {
       // Таймер: ожидаемое время минус фактическое
       setTime((task.expectedTime || 0) - task.actualTime);
@@ -46,9 +63,15 @@ export function Timer({ task, actions }: TimerProps) {
 
     // Проверяем, запущен ли таймер (только если IN_PROGRESS и корректные поля)
     if (task.status === 'IN_PROGRESS' && task.startTime && !task.endTime) {
+      console.log('✅ Устанавливаем isRunning = true');
       setIsRunning(true);
       setIsPaused(false);
     } else {
+      console.log('❌ Устанавливаем isRunning = false', { 
+        status: task.status, 
+        hasStartTime: !!task.startTime, 
+        hasEndTime: !!task.endTime 
+      });
       setIsRunning(false);
       setIsPaused(false);
     }
@@ -56,7 +79,10 @@ export function Timer({ task, actions }: TimerProps) {
 
   // Управление таймером/секундомером
   useEffect(() => {
+    console.log('⏱️ useEffect [INTERVAL] сработал', { isRunning, isPaused, isTimer });
+    
     if (isRunning && !isPaused) {
+      console.log('🟢 Запускаем интервал');
       intervalRef.current = setInterval(() => {
         setTime((prevTime) => {
           if (isTimer) {
@@ -75,12 +101,14 @@ export function Timer({ task, actions }: TimerProps) {
 
         // Обновляем actualTime в БД каждую секунду, используя ref для актуального значения
         actualTimeRef.current += 1;
+        console.log('⏲️ Обновляем actualTime:', actualTimeRef.current);
         updateTask(task.id, {
           actualTime: actualTimeRef.current,
         }).catch(console.error);
       }, 1000);
     } else {
       if (intervalRef.current) {
+        console.log('🔴 Останавливаем интервал');
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
@@ -88,6 +116,7 @@ export function Timer({ task, actions }: TimerProps) {
 
     return () => {
       if (intervalRef.current) {
+        console.log('🧹 Cleanup: останавливаем интервал');
         clearInterval(intervalRef.current);
       }
     };
@@ -95,6 +124,8 @@ export function Timer({ task, actions }: TimerProps) {
 
   const handleStart = async () => {
     try {
+      console.log('🚀 handleStart вызван');
+      
       // Проверяем, есть ли другой активный таймер
       const activeTimer = getActiveTimerTask();
       if (activeTimer && activeTimer.id !== task.id) {
@@ -110,11 +141,13 @@ export function Timer({ task, actions }: TimerProps) {
       }
       
       // Запускаем текущий таймер (серверный предохранитель отключит другие)
+      console.log('📝 Обновляем startTime в БД');
       await updateTask(task.id, {
         startTime: new Date(),
       });
       // Обновляем список, чтобы карточки упорядочились
       await refresh();
+      console.log('✅ Устанавливаем isRunning = true локально');
       setIsRunning(true);
       setIsPaused(false);
     } catch (error) {
