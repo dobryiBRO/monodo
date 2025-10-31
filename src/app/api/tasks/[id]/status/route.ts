@@ -17,7 +17,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { status } = body;
+    const { status, endTime, completedAt } = body;
 
     if (!status) {
       return NextResponse.json(
@@ -45,8 +45,8 @@ export async function PATCH(
 
     // Если задача переносится в COMPLETED, установить endTime и completedAt
     if (status === 'COMPLETED' && existingTask.status !== 'COMPLETED') {
-      updateData.endTime = new Date();
-      updateData.completedAt = new Date();
+      updateData.endTime = endTime ? new Date(endTime) : new Date();
+      updateData.completedAt = completedAt ? new Date(completedAt) : new Date();
     }
 
     // Если задача переносится из COMPLETED обратно в IN_PROGRESS, очистить endTime и completedAt

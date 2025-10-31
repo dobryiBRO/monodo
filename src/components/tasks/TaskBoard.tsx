@@ -282,7 +282,13 @@ export function TaskBoard({ tasksData: externalTasksData }: TaskBoardProps = {})
     });
 
     try {
-      await updateTaskStatus(taskId, newStatus);
+      // Если переносим в COMPLETED, передаём endTime с текущим временем
+      const updateOptions = newStatus === 'COMPLETED' ? {
+        endTime: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
+      } : undefined;
+      
+      await updateTaskStatus(taskId, newStatus, updateOptions);
       // Явно обновляем список задач после изменения статуса
       await new Promise(resolve => setTimeout(resolve, 100)); // Небольшая задержка для завершения обновления
     } catch (error) {

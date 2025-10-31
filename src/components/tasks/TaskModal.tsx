@@ -258,14 +258,14 @@ export function TaskModal({ isOpen, onClose, task, status, onSave }: TaskModalPr
               <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Плановое время начала
               </label>
-              <input
-                type="time"
-                value={formData.scheduledStartTime}
-                onChange={(e) => setFormData({ ...formData, scheduledStartTime: e.target.value })}
+                <input
+                  type="time"
+                  value={formData.scheduledStartTime}
+                  onChange={(e) => setFormData({ ...formData, scheduledStartTime: e.target.value })}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-900"
-                disabled={isSubmitting || !canEditScheduledTime}
-                readOnly={!canEditScheduledTime}
-              />
+                  disabled={isSubmitting || !canEditScheduledTime}
+                  readOnly={!canEditScheduledTime}
+                />
               {!canEditScheduledTime && (
                 <p className="text-xs text-gray-500 mt-1">
                   Плановое время нельзя изменить после запуска таймера
