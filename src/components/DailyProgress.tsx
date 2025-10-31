@@ -20,14 +20,14 @@ export function DailyProgress() {
   const progressData = useMemo<DayProgress[]>(() => {
     const last7Days = getLastNDays(7);
     
-    console.log('getLastNDays result:', last7Days.map(d => d.toISOString().split('T')[0]));
+    console.log('getLastNDays result:', last7Days.map(d => format(d, 'yyyy-MM-dd')));
 
     return last7Days.map((date) => {
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = format(date, 'yyyy-MM-dd');
 
       // Фильтруем задачи по дате
       const dayTasks = tasks.filter((task) => {
-        const taskDateStr = new Date(task.day).toISOString().split('T')[0];
+        const taskDateStr = format(new Date(task.day), 'yyyy-MM-dd');
         return taskDateStr === dateStr;
       });
 
