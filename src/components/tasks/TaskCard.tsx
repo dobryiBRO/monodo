@@ -74,8 +74,9 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
     } as React.CSSProperties;
   };
 
-  // Проверка просрочки ПЛАНОВОГО времени начала (только если таймер еще не запущен)
+  // Проверка просрочки ПЛАНОВОГО времени начала (только если таймер никогда не запускался)
   const isScheduledTimeOverdue = () => {
+    // Просрочка актуальна только если таймер ещё ни разу не запускали (нет startTime)
     if (task.status === 'IN_PROGRESS' && task.scheduledStartTime && !task.startTime) {
       const now = new Date();
       const scheduled = new Date(task.scheduledStartTime);
@@ -113,7 +114,7 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
         style={{ ...style, ...getCardStyle() }}
         {...attributes}
         {...listeners}
-        className="bg-white border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group"
+        className="border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group"
       >
         <div
           onClick={(e) => {
@@ -194,7 +195,7 @@ export function TaskCard({ task, onClick, onDelete, onCopy, isDeveloperMode = fa
         style={{ ...style, ...getCardStyle() }}
         {...attributes}
         {...listeners}
-        className="bg-white border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group"
+        className="border-2 border-gray-200 rounded-2xl p-5 hover:shadow-xl hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group"
       >
         <div
           onClick={(e) => {
